@@ -6,8 +6,7 @@ import java.util.Map.Entry;
 import org.rpg.character.*;
 import org.rpg.map.*;
 
-public class Combat extends OverWorld
-{
+public class Combat extends Tile{
 	private int newxpos = 0;
 	private int newypos = 0;
 	
@@ -23,7 +22,8 @@ public class Combat extends OverWorld
 	
 	private boolean isValidMove(int xpos, int ypos, Space grid[][]) {
 
-		if (xpos < 1 || ypos < 1 || xpos > maxWidth || ypos > maxHeight) { return false; }
+		//if (xpos < 1 || ypos < 1 || xpos > maxWidth || ypos > maxHeight) { return false; }
+		 if (xpos < 0 || ypos < 0) { return false; }
 
 		if (grid[ypos][xpos].hasWall()) { return false; }
 		
@@ -43,35 +43,10 @@ public class Combat extends OverWorld
 		return true;
 	}
 	
-	public void updateMapforCombat(Party party, Entry<Integer, Player> entry2, Space grid[][], int xpos, int ypos)
+	/*public void updateMapforCombat(Party party, Entry<Integer, Player> entry2, Space grid[][], int xpos, int ypos)
 	{
-		System.out.print("\033[H\033[2J");  
-		System.out.flush();
-		System.out.println(" _   .-')                     .-') _   .-')    .-') _     ('-.  _  .-')                                       ('-. .-. .-') _    \n" + 
-				"( '.( OO )_                  ( OO ) ) ( OO ). (  OO) )  _(  OO)( \\( -O )                                     ( OO )  /(  OO) )   \n" + 
-				" ,--.   ,--.).-'),-----. ,--./ ,--,' (_)---\\_)/     '._(,------.,------.          ,------.,-.-')   ,----.    ,--. ,--./     '._  \n" + 
-				" |   `.'   |( OO'  .-.  '|   \\ |  |\\ /    _ | |'--...__)|  .---'|   /`. '      ('-| _.---'|  |OO) '  .-./-') |  | |  ||'--...__) \n" + 
-				" |         |/   |  | |  ||    \\|  | )\\  :` `. '--.  .--'|  |    |  /  | |      (OO|(_\\    |  |  \\ |  |_( O- )|   .|  |'--.  .--' \n" + 
-				" |  |'.'|  |\\_) |  |\\|  ||  .     |/  '..`''.)   |  |  (|  '--. |  |_.' |      /  |  '--. |  |(_/ |  | .--, \\|       |   |  |    \n" + 
-				" |  |   |  |  \\ |  | |  ||  |\\    |  .-._)   \\   |  |   |  .--' |  .  '.'      \\_)|  .--',|  |_.'(|  | '. (_/|  .-.  |   |  |    \n" + 
-				" |  |   |  |   `'  '-'  '|  | \\   |  \\       /   |  |   |  `---.|  |\\  \\         \\|  |_)(_|  |    |  '--'  | |  | |  |   |  |    \n" + 
-				" `--'   `--'     `-----' `--'  `--'   `-----'    `--'   `------'`--' '--'         `--'    `--'     `------'  `--' `--'   `--' ");
-		
-		System.out.println("   +-----------+                                                                   +---------------------+\n" + 
-				"   |  Menu(m)  |                               THE WORLD                           |          †          |\n" + 
-				"   +-----------+                            Use WASD to move                       +---------------------+\n" + 
-				" ");
-
-
-		/*System.out.println("");
-		System.out.println("------------The World------------");
-    	System.out.println("---------------------------------");
-    	System.out.println("");*/
-		
-		
-		System.out.print(MARGINS);
 		for(int i = 0; i < ROWS; i++) {          
-		    for(int j = 0; j < COLUMNS; j++) {
+		    for(int j = 0; j < COLS; j++) {
 		        grid[i][j] = new Space(FIELD_CHAR);
 		        
 		        // make walls
@@ -124,7 +99,7 @@ public class Combat extends OverWorld
 				" # (1) Basic Attack                  HP: "+ party.getEnemies().get(0).getCurrentHP() +"/"+party.getEnemies().get(0).getHP() +"              HP: " + party.getEnemies().get(1).getCurrentHP() +"/" +party.getEnemies().get(1).getHP() +"              HP: " + party.getEnemies().get(2).getCurrentHP() +"/" +party.getEnemies().get(2).getHP() +"\n" +
 				" # (flee) Attempt escape\n"+
 				" # (skip) Skip turn\n");
-	}
+	}*/
 	
 	public void instantiateCombat(Party party, int xpos, int ypos, Space grid[][])
 	{
@@ -146,7 +121,7 @@ public class Combat extends OverWorld
 				"+-------------------------------------------------------------------------------------------------------------------------+");
 	
 		System.out.println("Monster Encounter! - Prepare to Fight!! [Press any key to begin]");
-		this.queryUser();
+		//this.queryUser();
 		
 		
 		System.out.println("   +-----------+                                                                   +---------------------+\n" + 

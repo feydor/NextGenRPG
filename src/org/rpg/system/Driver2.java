@@ -10,17 +10,15 @@ import org.rpg.map.*;
 import org.rpg.menu.*;
 
 public class Driver2 {
-	
-	
 
 	public static void main(String[] args) throws InterruptedException {
 		StateMachine stateMachine = new StateMachine(state.TITLE_STATE);
 		Title titleScreen = new Title();
-		Tile worldFrame = null;
+		Party party = new Party();
+		Tile worldFrame = new Tile(party);
 		CustomizationMenu customizationMenu = null;
 		
-		Party party = new Party();
-		
+
 		boolean isRunning = true;
 		while(isRunning) {
 			stateMachine.Update(titleScreen, worldFrame, customizationMenu, party);
@@ -37,9 +35,5 @@ public class Driver2 {
 //            }
 //         });
 		
-
-        
-		
-	
 	}
 }

@@ -45,8 +45,7 @@ public class StateMachine {
 		        	  currentState = state.OVERWORLD_STATE;
 		        	  
 		        	  // create next frame here
-		        	  worldFrame = new Tile();
-		        	  worldFrame.updateFrame(party);
+		        	  worldFrame.updateFrame();
 		        	  
 		          } else if(titleScreen.getDebugBool()) {
 		        	  currentState = state.OVERWORLD_STATE;
@@ -63,8 +62,8 @@ public class StateMachine {
 		    			   party.addPartyMember((i + 1), p); // 1, 2, 3, 4
 		    		   }
 		        	  // create next frame here
-		        	  worldFrame = new Tile();
-		        	  worldFrame.updateFrame(party);
+		        	  worldFrame.setParty(party);
+		        	  worldFrame.updateFrame();
 		        	  
 		          } else {currentState = state.TITLE_STATE; }
 		          
@@ -76,23 +75,32 @@ public class StateMachine {
 		    		   currentState = state.OVERWORLD_STATE;
 		    		   System.out.println("Begin new frame");
 		    		   
-		    		   worldFrame = new Tile();
+		    		   worldFrame.setParty(party);
 		    		   System.out.println("worldframe complete");
-		    		   worldFrame.updateFrame(party);
+		    		   worldFrame.updateFrame();
 		    	   } else {
 		    		   currentState = state.CUSTOMIZATION_STATE;
 		    	   }
 		    	   
 		    	   break;
 		       case OVERWORLD_STATE:
-		    	 
+		    	  if(worldFrame.showMenu) {
+		    		  currentState = state.PARTY_MENU_STATE;
+		    	  } else {
+		    		  currentState = state.OVERWORLD_STATE;
+		    	  }
 		          /*if(player.isAttacked()) {
 		              currentState = state.COMBAT_STATE;
 		          } else if (User opens options menu) {
 		        	  currentState = state.OPTIONS_STATE;
 		          }*/
-		          
+
 		          break;
+		       case PARTY_MENU_STATE:
+		    	   System.out.println("In PARTY_MENU_STATE");
+		    	   worldFrame.showMenu = false;
+		    	   currentState = state.OVERWORLD_STATE;
+		    	   break;
 
 		    	      
 		    }

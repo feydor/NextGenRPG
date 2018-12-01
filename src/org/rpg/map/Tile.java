@@ -5,6 +5,9 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -20,6 +23,7 @@ import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
@@ -27,6 +31,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import org.rpg.character.Party;
+import org.rpg.character.Player;
 import org.rpg.combat.Combat;
 import org.rpg.system.Dir;
 import org.rpg.system.KeyBinding;
@@ -41,11 +46,12 @@ public class Tile extends JPanel implements TileIndex{
 		private BufferedImage tileSheet; // tileSheet for splitting, laoded from file at sheetLocation
 		private BufferedImage[] tiles; // contains individual tiles after splitting the tileSheet
     	private Space[][] world; // contains the overworld map
+    	private Party partyOverWorld;
+    	public static Boolean showMenu; // listening to this boolean (StateMachine) will determine if menu pops up
     	
     	private BufferedImage sprite;
     	private int spriteX = 64; // need to be changed to (or made to work with) party Xpos and Ypos
     	private int spriteY = 64;
-	    // FIXME: need to find a way of changing this url
     	private String spriteLoc = "https://i.ibb.co/f1NkqtH/hero.png";
     	private Map<Dir, Boolean> dirMap = new EnumMap<>(Dir.class); // directions map
     	private Timer animationTimer = new Timer(TIMER_DELAY, new AnimationListener()); 
@@ -63,8 +69,8 @@ public class Tile extends JPanel implements TileIndex{
     	final int rows = 20;
     	final int cols = 20;
     	
-        final int ROWS = 40; // number of tiles per row
-    	final int COLS = 40; // number of tiles per columns
+        protected final int ROWS = 40; // number of tiles per row
+    	protected final int COLS = 40; // number of tiles per columns
     	
     	public static final int TIMER_DELAY = 10;
 	    public static final int DELTA_X = 2; // speed = 3
@@ -77,7 +83,8 @@ public class Tile extends JPanel implements TileIndex{
 	    private static final int SCREEN_WIDTH = 1280; // px
 	    private static final int SCREEN_HEIGHT = 1024;
     	
-    public Tile() {
+    public Tile(Party party) {
+    	partyOverWorld = party;
     	world = new Space[ROWS][COLS];
     	// load with integers indexes and corresponding bg image 
 		instantiateWorldArray();
@@ -101,7 +108,12 @@ public class Tile extends JPanel implements TileIndex{
 		animationTimer.start();
 
 		setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
+		showMenu = false;
+		this.setFocusable(true);
+		this.addKeyListener(menuEnter);
     }
+    
+    public Tile() {} // needed for Combat extension of Tile
     
     // NOTE: Not used right now. Instead each image is manually loaded from file in Space class.
     public void getTilesFromSheet() {
@@ -162,11 +174,6 @@ public class Tile extends JPanel implements TileIndex{
     @Override
     public void paintComponent(Graphics g) {
     	super.paintComponent(g);
-    	
-		// not needed in current implementation
-    	//calculate pixel height and width
-    	//int pixelHeight= ROWS * TILE_HEIGHT; // 30 * 32 = 960px
-    	//int pixelWidth = COLS * TILE_WIDTH; //  40 * 32 = 1024px
     	
     	// layer 1 - background
     	for (int i = 0; i < ROWS; i++) {
@@ -242,9 +249,22 @@ public class Tile extends JPanel implements TileIndex{
            if(!isValidMove(newX, newY)) {
         	   return;
            }
+           if(spriteX != newX || spriteY != newY) {
+        	   // Random Encounters here
+        	   if (Math.random() < 0.01) {
+           	    System.out.println("Prepare to fight!");
+   				//Combat combat = new Combat();
+   				partyOverWorld.setInCombat(true);			
+   				//combat.enterCombat(partyOverWorld, partyOverWorld.getPartyXpos(), partyOverWorld.getPartyYpos(), world);
+   				//partyOverWorld.clearEnemies();
+   				partyOverWorld.setInCombat(false);
+   			}
+           }
            spriteX = newX;
            spriteY = newY;
-           System.out.println("(" + spriteX + ", " + spriteY + ")");
+           partyOverWorld.setPartyXpos(spriteX);
+           partyOverWorld.setPartyYpos(spriteY);
+           //System.out.println("(" + partyOverWorld.getPartyXpos() + ", " + partyOverWorld.getPartyYpos() + ")");
            repaint();         
         }
         
@@ -269,7 +289,7 @@ public class Tile extends JPanel implements TileIndex{
     			System.out.println("Talk to NPC."); 
     		}
     		
-    		if(world[ypos][xpos].hasTerrain()) { isValid = false; System.out.println("Hit Terrain!"); }
+    		if(world[ypos][xpos].hasTerrain()) { isValid = false; }
     		
     		if(world[ypos][xpos].hasTrap()) { /* handle the trap */ }
     		
@@ -299,13 +319,13 @@ public class Tile extends JPanel implements TileIndex{
 
      }
     
-    public void updateFrame(Party party) {
+    public void updateFrame() {
     	JFrame f = new JFrame();
     	KeyBinding mainPanel = new KeyBinding(); 
         f.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
         f.setTitle("The World");
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.setContentPane(new Tile());
+        f.setContentPane(new Tile(partyOverWorld));
         f.setVisible(true);	
         
         // open the sound file as a Java input stream
@@ -323,17 +343,38 @@ public class Tile extends JPanel implements TileIndex{
 		} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e1) {
 			e1.printStackTrace();
 		}
-        
-        party.getParty().get(1).printStats();
     }
     
+    private KeyListener menuEnter = new KeyAdapter() {
+        @Override
+        public void keyTyped(KeyEvent e) {
+           if (e.getKeyChar() == KeyEvent.VK_ENTER) {
+        	   showMenu = true;
+           }
+        }
+     };
+     
+     public boolean isShowingMenu() {
+    	 return showMenu;
+     }
+     public void setParty(Party party) {
+    	 partyOverWorld = party;
+ 	}
+     public Party getParty() {
+    	 return partyOverWorld;
+     }
+    
     public static void main(String avg[]) throws IOException {
-    	Tile worldFrame = new Tile();
+    	Player p1 = new Player("Warrior");
     	Party p = new Party();
+    	p.addPartyMember(1, p1);
+    	Tile worldFrame = new Tile(p);
     	SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-            	worldFrame.updateFrame(p);
+            	worldFrame.updateFrame();
             }
          });
 	}
+
+	
 }

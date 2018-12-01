@@ -2,6 +2,7 @@ package org.rpg.system;
 
 import java.awt.GraphicsEnvironment;
 
+// lists usable fonts on the current os
 public class ListJavaFonts
 {
 
