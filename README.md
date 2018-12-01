@@ -1,4 +1,4 @@
-# RPG_GroupProject
+# NextGenRPG
 
 For the ECE 373 Group Project
                                                                                            
