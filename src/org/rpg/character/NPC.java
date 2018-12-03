@@ -21,12 +21,13 @@ public class NPC extends PlayableCharacter{
 	// make default enemy, class = Warrior
 	public NPC() {
 		super();
+		name = "Skeleton";
 		this.type = "Skeleton";
 		droppableItems = new ArrayList<Item>();
 		droppableXP = 100;
 		droppableMoney = 100;
 		dropRate = 25;
-		dialogue = "Ur 2 slow!";
+		dialogue = "**rattles**";
 	}
 	
 	public NPC(String type, String kit) {

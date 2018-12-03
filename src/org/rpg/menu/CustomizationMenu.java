@@ -139,7 +139,14 @@ public class CustomizationMenu implements ActionListener{
 			subNamePanel.add(playerNameLabel);
 			subNamePanel.add(playerNameFields[i]);
 		}
-		namePanel.add(subNamePanel);
+		// add subNamePanel to namePanel
+		GridBagConstraints subNameCons = new GridBagConstraints();
+		subNameCons.gridx = 0;
+		subNameCons.gridy = 0;
+		//subNameCons.fill = GridBagConstraints.BOTH;
+		//subNameCons.weightx = 0.25;
+		//subNameCons.weighty = 1.0;
+		namePanel.add(subNamePanel, subNameCons);
 		
 		// add submit button, at the bottom
 		submitNames = new JButton("END");
@@ -148,7 +155,12 @@ public class CustomizationMenu implements ActionListener{
 		submitNames.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
 		submitNames.addActionListener(new MenuListener());
 		submitNames.addKeyListener(enter);
-		namePanel.add(submitNames);
+		GridBagConstraints nameButtonCons = new GridBagConstraints();
+		nameButtonCons.gridx = 0;
+		nameButtonCons.gridy = 1;
+		nameButtonCons.ipady = 10;
+		nameButtonCons.fill = GridBagConstraints.BOTH;
+		namePanel.add(submitNames, nameButtonCons);
 	}
 	
 	private void buildClassPanel() {

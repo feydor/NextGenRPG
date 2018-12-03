@@ -1,7 +1,9 @@
 package org.rpg.combat;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -29,17 +31,22 @@ import javax.swing.border.LineBorder;
 import org.rpg.character.*;
 import org.rpg.map.*;
 import org.rpg.menu.ButtonPane;
+import org.rpg.system.AudioPlayer;
 import org.rpg.system.KeyBinding;
 
 public class Combat extends Tile{
 	private JFrame combatScreen;
-	private JPanel combatPanel;
-	private String bgMusic = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/music/Xak.wav";
-	private Color windowColor;
+    private JPanel combatPanel; 
+    private JPanel mapPanel; // will be handled by private inner class MapScreen
+	//private String bgMusic = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/music/firstCampaign.wav";
+	private String bgMusic = "https://s3-us-west-1.amazonaws.com/nextgenrpgassets/firstCampaign.wav";
+    private Color windowColor;
 	private Color bgColor;
 	private ButtonPane combatPane;
+	private AudioPlayer fightMusic;
 	
 	private Party party;
+	private Space[][] world;
 	
 	private int newxpos = 0;
 	private int newypos = 0;
@@ -48,7 +55,8 @@ public class Combat extends Tile{
 	private int distEnemies = 8; //how far apart friendly and enemies centers are
 	
 	
-	public Combat() {
+	public Combat() 
+	{
 		combatScreen = new JFrame();
 		windowColor = new Color(18, 1, 113);
 		bgColor = new Color(0, 0, 0);
@@ -59,7 +67,7 @@ public class Combat extends Tile{
 		combatPanel.setBackground(bgColor);
 		
 		// combatPanel will contain two panels (1) The map screen and (2) command screen 
-		JPanel mapPanel = new JPanel();
+		mapPanel = new MapPanel();
 		mapPanel.setBackground(bgColor);
 		//mapPanel.paint(Graphics graphics); // TODO: somehow need to paint the map screen here
 		
@@ -152,36 +160,33 @@ public class Combat extends Tile{
 		commandPanelCons.weightx = 1.0;
 		commandPanelCons.weighty = 0.33;
 		combatPanel.add(commandPanel, commandPanelCons);
-		
 	}
 	
-	public void update(Party partyOverWorld) {
+	
+	// the main setup function
+	public void update(Party partyOverWorld, Space[][] worldTile) {
 		setPartyCombat(partyOverWorld);
+		setWorldGrid(worldTile);
     	KeyBinding mainPanel = new KeyBinding(); 
     	combatScreen.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
     	combatScreen.setTitle("Battle");
     	combatScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     	//combatScreen.setContentPane(new Tile(partyOverWorld));
     	
+    	instantiateCombat(party, party.getPartyXpos(), party.getPartyYpos());
+    	
     	buildCombatPanel();
     	combatScreen.add(combatPanel);
     	combatScreen.setVisible(true);	
-        
-        // open the sound file as a Java input stream
-//        BufferedInputStream audioStream;
-//        InputStream in;
-//        AudioInputStream audioIn;
-//        Clip clip;
-//		try {
-//			in = new FileInputStream(bgMusic);
-//			audioStream = new BufferedInputStream(in);
-//			audioIn = AudioSystem.getAudioInputStream(audioStream);
-//			clip = AudioSystem.getClip();
-//			clip.open(audioIn);
-//			clip.start();
-//		} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e1) {
-//			e1.printStackTrace();
-//		}
+		try {
+			fightMusic = new AudioPlayer(bgMusic, "NET"); // NOTE: remove NET to stream from local file at bgMusic
+			fightMusic.play();								// also uncomment bgMusic above
+		} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+			e.printStackTrace();
+		}
+		
+		
+		
 	}
 	
 
@@ -190,28 +195,29 @@ public class Combat extends Tile{
 		chr.setCurrentHP(chr.getCurrentHP() - 2);
 	}
 	
-	private boolean isValidMove(int xpos, int ypos, Space grid[][]) {
+	 // assumes that xpos and ypos are in block units, not pixel units
+	 private boolean isValidMove(int xpos, int ypos) {
+ 		boolean isValid = true;
 
-		//if (xpos < 1 || ypos < 1 || xpos > maxWidth || ypos > maxHeight) { return false; }
-		 if (xpos < 0 || ypos < 0) { return false; }
-
-		if (grid[ypos][xpos].hasWall()) { return false; }
-		
-		if (grid[ypos][xpos].hasTerrain()) { return false; }
-		
-		if (grid[ypos][xpos].hasPlayer()) { return false; }
-		
-		if (grid[ypos][xpos].hasTreasure()) { 
-			System.out.println("Get Treasure.");
-			return false;
-		}
-		
-		if (grid[ypos][xpos].hasNPC()) { 
-			System.out.println("Talk to NPC."); 
-			return false;
-		}
-		return true;
-	}
+ 		if (xpos < 0 || ypos < 0) { isValid = false; }
+ 		
+ 		if(world[ypos][xpos].hasWall()) { isValid = false; }
+ 		
+ 		if (world[ypos][xpos].hasPlayer()) { isValid = false; }
+ 		
+ 		if(world[ypos][xpos].hasTreasure()) { isValid = false; }
+ 		
+ 		if(world[ypos][xpos].hasNPC()) { 
+ 			/* talk to NPC */ 
+ 			isValid = false;
+ 			System.out.println("Talk to NPC."); 
+ 		}
+ 		
+ 		if(world[ypos][xpos].hasTerrain()) { isValid = false; }
+ 		
+ 		return isValid;
+ 	}
+	
 	
 	/*public void updateMapforCombat(Party party, Entry<Integer, Player> entry2, Space grid[][], int xpos, int ypos)
 	{
@@ -259,16 +265,23 @@ public class Combat extends Tile{
 		    System.out.print("\n" + MARGINS);         
 		}
 		*/
-	
-	public void instantiateCombat(Party party, int xpos, int ypos, Space grid[][])
+	// instantiates player positions and converts from pixel units to block units
+	public void instantiateCombat(Party party, int xposPx, int yposPx)
 	{
+		// divide pixels into ROWS and COLS, NOTE: Any decimal is cut off so 3.84 -> 3
+ 		// forces player to be in neat 32x32 boxes for boundary checking purposes
+ 		int xpos = xposPx / (SCREEN_WIDTH / COLS); // xposPX / 32
+ 		int ypos = yposPx / (SCREEN_HEIGHT / ROWS); 
+ 		
+ 		System.out.println("xpos = " + xpos);
+ 		System.out.println("ypos = " + ypos);
 		
 		for(Map.Entry<Integer, Player> entry : party.getParty().entrySet()) //initialize location of party members
 		{	
 			newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers);
 			newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers);
 			
-			while (!isValidMove(newxpos, newypos, grid))
+			while (!isValidMove(newxpos, newypos))
 			{
 				newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers);
 				newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers);
@@ -276,7 +289,7 @@ public class Combat extends Tile{
 			
 			entry.getValue().setXpos(newxpos);
 			entry.getValue().setYpos(newypos);
-			grid[newypos][newxpos].setHasPlayer(true);
+			world[newypos][newxpos].setHasPlayer(true);
 			
 		}
 		
@@ -286,41 +299,41 @@ public class Combat extends Tile{
 		{
 			NPC enemy = new NPC();
 			
-			if (isValidMove(xpos + distEnemies, ypos, grid))
+			if (isValidMove(xpos + distEnemies, ypos))
 			{
 				newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers + distEnemies);
 				newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers);
-				while (!isValidMove(newxpos, newypos, grid))
+				while (!isValidMove(newxpos, newypos))
 				{
 					newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers + distEnemies);
 					newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers);
 				}
 			}
-			else if(isValidMove(xpos - distEnemies, ypos, grid))
+			else if(isValidMove(xpos - distEnemies, ypos))
 			{
 				newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers - distEnemies);
 				newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers);
-				while (!isValidMove(newxpos, newypos, grid))
+				while (!isValidMove(newxpos, newypos))
 				{
 					newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers - distEnemies);
 					newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers);
 				}
 			}
-			else if(isValidMove(xpos, ypos + distEnemies, grid))
+			else if(isValidMove(xpos, ypos + distEnemies))
 			{
 				newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers);
 				newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers + distEnemies);
-				while (!isValidMove(newxpos, newypos, grid))
+				while (!isValidMove(newxpos, newypos))
 				{
 					newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers);
 					newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers + distEnemies);
 				}
 			}
-			else if(isValidMove(xpos, ypos - distEnemies, grid))
+			else if(isValidMove(xpos, ypos - distEnemies))
 			{
 				newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers);
 				newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers - distEnemies);
-				while (!isValidMove(newxpos, newypos, grid))
+				while (!isValidMove(newxpos, newypos))
 				{
 					newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers);
 					newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers - distEnemies);
@@ -329,78 +342,84 @@ public class Combat extends Tile{
 			enemy.setXpos(newxpos);
 			enemy.setYpos(newypos);
 			party.addtoEnemies(enemy);
-			grid[newypos][newxpos].setHasPlayer(true);
+			world[newypos][newxpos].setHasPlayer(true);
+			
+			System.out.println("enemy.getXpos() = " + enemy.getXpos());
+			System.out.println("enemy.getYpos() = " + enemy.getYpos());
+			System.out.println("enemy name = " + enemy.getName());
 		}
 		
-		System.out.print(MARGINS);
-		for(int i = 0; i < ROWS; i++) {          
-		    for(int j = 0; j < COLUMNS; j++) {
-		        grid[i][j] = new Space(FIELD_CHAR);
-		        
-		        // make walls
-		        if(i == 0 || i == maxHeight || j == 0 || j == maxWidth) {
-		        	grid[i][j] = new Space(WALLS_CHAR);
-		        }
-		        
-		        // test NPC
-		        grid[8][8] = new Space(NPC_CHAR);
-		        
-		        // test Terrain
-		        grid[2][8] = new Space(TERRAIN_CHAR);
-		        grid[3][8] = new Space(TERRAIN_CHAR);
-		        grid[3][9] = new Space(TERRAIN_CHAR);
-		        grid[3][7] = new Space(TERRAIN_CHAR);
-		        grid[4][8] = new Space(TERRAIN_CHAR);
-
-		        grid[maxHeight - 1][maxWidth - 1] = new Space(ITEM_CHAR);
-		        
-		        for(Map.Entry<Integer, Player> entry : party.getParty().entrySet())
-		        {
-		        	grid[entry.getValue().getYpos()][entry.getValue().getXpos()] = new Space(entry.getKey());
-		        }
-		        for(int z = 0; z < party.getEnemies().size(); z++)
-		        {
-		        	switch(z)
-		        	{
-		        	case 0:
-		        		party.getEnemies().get(z).setSSprite("@");
-		        		break;
-		        	case 1:
-		        		party.getEnemies().get(z).setSSprite("$");
-		        		break;
-		        	case 2:
-		        		party.getEnemies().get(z).setSSprite("&");
-		        		break;
-		        	case 3:
-		        		party.getEnemies().get(z).setSSprite("%");
-		        		break;
-		        	}
-		        	grid[party.getEnemies().get(z).getYpos()][party.getEnemies().get(z).getXpos()] = new Space(party.getEnemies().get(z).getSSprite());
-		        }
-		        
-		        if (!grid[i][j].hasPlayer())
-		        {
-		        	System.out.print(PIXEL_DIST + grid[i][j].getSprite());
-		        }
-		        else
-		        {
-		        	System.out.print(PIXEL_DIST + grid[i][j].getSSprite());
-		        }
-		    }
-		    System.out.print("\n" + MARGINS);         
-		}
-		System.out.print("\n");
-				
-		System.out.println("----------------------------------------------------------------------------------------------------------\n"+
-				"+-----------------------+\n" + 
-				"| "+ party.getParty().get("1").getName()+ "'s turn" + " Player: 1" + "\n" + 
-				"+-----------------------+\n" + 
-				"+-----------------------+  +-----------------------+  +-----------------------+  +-----------------------+\n" + 
-				"| Abilities:                       "+ "Enemy @"+"               "+"Enemy $"+"                  "+"Enemy &\n"+
-				"+-----------------------+  +-----------------------+  +-----------------------+  +-----------------------+\n" + 
-				" # (1) Basic Attack                  HP: "+ party.getEnemies().get(0).getCurrentHP() +"/"+party.getEnemies().get(0).getHP() +"              HP: " + party.getEnemies().get(1).getCurrentHP() +"/" +party.getEnemies().get(1).getHP() +"              HP: " + party.getEnemies().get(2).getCurrentHP() +"/" +party.getEnemies().get(2).getHP() +"\n" +
-				" # (flee) Attempt escape\n"+
-				" # (skip) Skip turn\n");
+		
+		
+//		System.out.print(MARGINS);
+//		for(int i = 0; i < ROWS; i++) {          
+//		    for(int j = 0; j < COLUMNS; j++) {
+//		        grid[i][j] = new Space(FIELD_CHAR);
+//		        
+//		        // make walls
+//		        if(i == 0 || i == maxHeight || j == 0 || j == maxWidth) {
+//		        	grid[i][j] = new Space(WALLS_CHAR);
+//		        }
+//		        
+//		        // test NPC
+//		        grid[8][8] = new Space(NPC_CHAR);
+//		        
+//		        // test Terrain
+//		        grid[2][8] = new Space(TERRAIN_CHAR);
+//		        grid[3][8] = new Space(TERRAIN_CHAR);
+//		        grid[3][9] = new Space(TERRAIN_CHAR);
+//		        grid[3][7] = new Space(TERRAIN_CHAR);
+//		        grid[4][8] = new Space(TERRAIN_CHAR);
+//
+//		        grid[maxHeight - 1][maxWidth - 1] = new Space(ITEM_CHAR);
+//		        
+//		        for(Map.Entry<Integer, Player> entry : party.getParty().entrySet())
+//		        {
+//		        	grid[entry.getValue().getYpos()][entry.getValue().getXpos()] = new Space(entry.getKey());
+//		        }
+//		        for(int z = 0; z < party.getEnemies().size(); z++)
+//		        {
+//		        	switch(z)
+//		        	{
+//		        	case 0:
+//		        		party.getEnemies().get(z).setSSprite("@");
+//		        		break;
+//		        	case 1:
+//		        		party.getEnemies().get(z).setSSprite("$");
+//		        		break;
+//		        	case 2:
+//		        		party.getEnemies().get(z).setSSprite("&");
+//		        		break;
+//		        	case 3:
+//		        		party.getEnemies().get(z).setSSprite("%");
+//		        		break;
+//		        	}
+//		        	grid[party.getEnemies().get(z).getYpos()][party.getEnemies().get(z).getXpos()] = new Space(party.getEnemies().get(z).getSSprite());
+//		        }
+//		        
+//		        if (!grid[i][j].hasPlayer())
+//		        {
+//		        	System.out.print(PIXEL_DIST + grid[i][j].getSprite());
+//		        }
+//		        else
+//		        {
+//		        	System.out.print(PIXEL_DIST + grid[i][j].getSSprite());
+//		        }
+//		    }
+//		    System.out.print("\n" + MARGINS);         
+//		}
+//		System.out.print("\n");
+//				
+//		System.out.println("----------------------------------------------------------------------------------------------------------\n"+
+//				"+-----------------------+\n" + 
+//				"| "+ party.getParty().get("1").getName()+ "'s turn" + " Player: 1" + "\n" + 
+//				"+-----------------------+\n" + 
+//				"+-----------------------+  +-----------------------+  +-----------------------+  +-----------------------+\n" + 
+//				"| Abilities:                       "+ "Enemy @"+"               "+"Enemy $"+"                  "+"Enemy &\n"+
+//				"+-----------------------+  +-----------------------+  +-----------------------+  +-----------------------+\n" + 
+//				" # (1) Basic Attack                  HP: "+ party.getEnemies().get(0).getCurrentHP() +"/"+party.getEnemies().get(0).getHP() +"              HP: " + party.getEnemies().get(1).getCurrentHP() +"/" +party.getEnemies().get(1).getHP() +"              HP: " + party.getEnemies().get(2).getCurrentHP() +"/" +party.getEnemies().get(2).getHP() +"\n" +
+//				" # (flee) Attempt escape\n"+
+//				" # (skip) Skip turn\n");
 	}
 	
 	public void enterCombat(Party party, int xpos, int ypos, Space grid[][])
@@ -554,9 +573,15 @@ public class Combat extends Tile{
 		}
 	}
 	
-
+	///////////////////////////////////////////////////////////////////////////
+	// Getters and Setters
+	//////////////////////////////////////////////////////////////////////
 	private void setPartyCombat(Party partyOverWorld) {
 		party = partyOverWorld;
+	}
+	
+	private void setWorldGrid(Space[][] worldTile) {
+		world = worldTile;
 	}
 	
 	////////////////////////////////////////////////////////////////////////////
@@ -580,7 +605,55 @@ public class Combat extends Tile{
 				// ...
 			} 
 			
-		}
-		
+		}	
+	}
+	
+	/////////////////////////////////////////////////////////////////////////////
+	// MapPanel to be painted on (the main combat screen)
+	/////////////////////////////////////////////////////////////
+	private class MapPanel extends JPanel {
+
+	    public MapPanel() {
+	        setBorder(BorderFactory.createLineBorder(Color.WHITE));
+	        setBackground(bgColor);
+	        setForeground(Color.WHITE);	
+			setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
+	    }
+
+	    public Dimension getPreferredSize() {
+	        return new Dimension(800, 800);
+	    }
+
+	    public void paintComponent(Graphics g) {
+	        super.paintComponent(g);       
+	     // layer 1 - background
+	    	for (int i = 0; i < ROWS; i++) {
+	    	    for (int j = 0; j < COLS; j++) {
+
+	    	    	g.drawImage(world[i][j].getImage(), i*TILE_WIDTH, j*TILE_HEIGHT, null);
+	    	    	
+	                //NOTE: draw optional borders here
+	                g.setColor(Color.DARK_GRAY);
+	                g.drawRect(i * TILE_WIDTH, j * TILE_HEIGHT, TILE_WIDTH ,TILE_HEIGHT);
+	    	    } 
+	    	}	
+	    	
+	    	// layer 2 - objects, foilage, terrain
+	        // ...
+
+	    	//layer 3 - sprites
+	    	
+	    	// TODO: Change to make less consistent
+	    	int i = 0;
+	    	for(Map.Entry<Integer, Player> player : party.getParty().entrySet()) {
+	    		System.out.println("i = " + i);
+	    		System.out.println("party.getPartyXpos() = " + party.getPartyXpos());
+	    		System.out.println("party.getPartyYpos() = " + party.getPartyYpos());
+	    		
+	    		g.drawImage(player.getValue().getSprite(), party.getPartyXpos(), party.getPartyXpos(), null);
+	    		party.setPartyYpos(party.getPartyYpos() + 64);
+	    		i++;
+	    	}
+	    }  
 	}
 }

@@ -114,7 +114,7 @@ private void createNumPlayersButtons(Color fgColor) {
             buttons[i].setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
             buttons[i].setBorder(BorderFactory.createCompoundBorder(
             		buttons[i].getBorder(), 
-			        BorderFactory.createEmptyBorder(10, 10, 10, 10)));
+            		BorderFactory.createEmptyBorder(10, 10, 10, 10)));
             buttons[i].addKeyListener(enter);
             buttons[i].addKeyListener(new KeyAdapter() {
                @Override

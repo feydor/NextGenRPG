@@ -33,6 +33,7 @@ import javax.swing.Timer;
 import org.rpg.character.Party;
 import org.rpg.character.Player;
 import org.rpg.combat.Combat;
+import org.rpg.system.AudioPlayer;
 import org.rpg.system.Dir;
 import org.rpg.system.KeyBinding;
 import javax.sound.sampled.AudioInputStream;
@@ -57,14 +58,15 @@ public class Tile extends JPanel implements TileIndex{
     	private String spriteLoc = "https://i.ibb.co/f1NkqtH/hero.png";
     	private Map<Dir, Boolean> dirMap = new EnumMap<>(Dir.class); // directions map
     	private Timer animationTimer = new Timer(TIMER_DELAY, new AnimationListener()); 
-        String bgMusic = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/music/Xak.wav";
+        private String bgMusic = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/music/Xak.wav";
+        private AudioPlayer worldMusic;
         private Clip clip; // music player
         private BufferedInputStream audioStream;
         private InputStream in;
         private AudioInputStream audioIn;
     	 
-		private final int TILE_WIDTH = 32; // e.g. 64x64, 32x32, 16x16, etc
-    	private final int TILE_HEIGHT = 32;
+		public final int TILE_WIDTH = 32; // e.g. 64x64, 32x32, 16x16, etc
+    	public final int TILE_HEIGHT = 32;
     	private final int WINDOW_HEIGHT = 1000;
     	private final int WINDOW_WIDTH = 1300;
     	
@@ -262,19 +264,19 @@ public class Tile extends JPanel implements TileIndex{
            }
            if(spriteX != newX || spriteY != newY) {
         	   // Random Encounters here
-        	   System.out.println(partyOverWorld.getParty().get(1).getName());
-	    		  System.out.println(partyOverWorld.getParty().get(4).getName());
-        	   if (Math.random() < 0.01 && !partyOverWorld.isInCombat()) {
+        
+        	   if (Math.random() < 0.01 && !partyOverWorld.isInCombat() 
+        			   && spriteX > 4 * TILE_WIDTH && spriteY > 4 * TILE_HEIGHT) {
            	    System.out.println("Prepare to fight!");
-   				Combat combat = new Combat();
-   				combat.update(partyOverWorld);
-   				partyOverWorld.setInCombat(true);			
-   				//combat.enterCombat(partyOverWorld, partyOverWorld.getPartyXpos(), partyOverWorld.getPartyYpos(), world);
-   				//partyOverWorld.clearEnemies();
-   				//partyOverWorld.setInCombat(false);
+   				Combat combat;
+   				
+   				partyOverWorld.setPartyXpos(spriteX);
+   				partyOverWorld.setPartyYpos(spriteY);
+				combat = new Combat();
+				combat.update(partyOverWorld, world);
+				partyOverWorld.setInCombat(true);
    				
    				//turn off music
-   				//clip.stop();
    				
    			}
            }
@@ -346,17 +348,13 @@ public class Tile extends JPanel implements TileIndex{
     	frame.setContentPane(new Tile(partyOverWorld));
     	frame.setVisible(true);	
     	
-    	// open the sound file as a Java input stream
-    	try {
-			in = new FileInputStream(bgMusic);
-			audioStream = new BufferedInputStream(in);
-			audioIn = AudioSystem.getAudioInputStream(audioStream);
-			clip = AudioSystem.getClip();
-			clip.open(audioIn);
-			clip.start();
-		} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e1) {
-			e1.printStackTrace();
-		}
+//    	try {
+//			worldMusic = new AudioPlayer(bgMusic); // remove NET to stream from local file at bgMusic
+//			worldMusic.play();
+//		} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+//			e.printStackTrace();
+//		}
+    	
     
     }
     
@@ -371,6 +369,9 @@ public class Tile extends JPanel implements TileIndex{
         }
      };
      
+     //////////////////////////////////////////////////////////////////////
+     // Getters and Setters
+     ////////////////////////////////////////////////////////////////
      public boolean isShowingMenu() {
     	 return showMenu;
      }
@@ -379,6 +380,10 @@ public class Tile extends JPanel implements TileIndex{
  	}
      public Party getParty() {
     	 return partyOverWorld;
+     }
+     
+     public BufferedImage getSprite() {
+    	 return sprite;
      }
     
     public static void main(String avg[]) throws IOException {

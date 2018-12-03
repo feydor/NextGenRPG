@@ -1,7 +1,11 @@
 package org.rpg.character;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
 import org.rpg.combat.Abilities;
@@ -13,10 +17,11 @@ public abstract class PlayableCharacter{
     
 	protected String name; // must set when creating Player
 	protected ImageIcon avatar; // must set when creating Player
+	protected BufferedImage sprite;
+	private String spriteLoc = "https://i.ibb.co/fx8wJzP/hero.png"; // default, use setSprite(url) to change
     protected int level;
     protected int XP;
     protected String kit;
-    protected String ssprite;
     protected int xpos;
 	protected int ypos;
     protected int HP;
@@ -44,7 +49,7 @@ public abstract class PlayableCharacter{
     	name = "";
     	xpos = 1;
     	ypos = 1;
-    	ssprite = "default";
+    	sprite = createSprite(spriteLoc);
     	level = 1;
     	XP = 0;
     	kit = "Warrior";
@@ -69,7 +74,7 @@ public abstract class PlayableCharacter{
     	name = "";
     	xpos = 1;
     	ypos = 1;
-    	ssprite = "default";
+    	sprite = createSprite(spriteLoc);
     	level = 1;
     	XP = 0;
     	this.kit = kit;
@@ -93,7 +98,7 @@ public abstract class PlayableCharacter{
     	name = "";
     	xpos = 1;
     	ypos = 1;
-    	ssprite = "default";
+    	sprite = createSprite(spriteLoc);
     	level = 1;
     	XP = 0;
     	this.kit = kit;
@@ -179,7 +184,18 @@ public abstract class PlayableCharacter{
     public int getMoney() { return money; }
 
     public void setMoney(int money) { this.money = money;  }
-
+    
+    public BufferedImage createSprite(String spriteLoc) {
+    	  try {
+    		  BufferedImage sprt = ImageIO.read(new URL(spriteLoc));
+    		  return sprt;
+    	  } catch (IOException e) {
+    		  e.printStackTrace();
+    	  }
+        
+    	  return sprite; // NOTE: Eclipse gives an error if this return statement is not present
+  	  				// If loading of sprite goes well, it should NEVER run
+       }
     
     
     //////////////////////////////////////////////////////////
@@ -233,12 +249,16 @@ public abstract class PlayableCharacter{
     	ypos--;
     }
 
-	public String getSSprite() {
-		return ssprite;
+	public BufferedImage getSprite() {
+		return sprite;
 	}
 
-	public void setSSprite(String string) {
-		ssprite = string;
+	public void setSprite(BufferedImage sprite) {
+		this.sprite = sprite;
+	}
+	
+	public void setSprite(String url) {
+		this.sprite = createSprite(url);
 	}
 
     
