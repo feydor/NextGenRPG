@@ -14,6 +14,12 @@ public class Gear extends EquipableItem {
 		spdVal = 0;
 	}
 	
+	public Gear(String name, String description, int slot) {
+		setName(name);
+		setSlot(slot);
+		setDescription(description);
+	}
+	
 	//setters and getters
 	public int getDef() {
 		return this.defVal;

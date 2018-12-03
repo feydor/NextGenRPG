@@ -68,10 +68,10 @@ public class CustomizationMenu implements ActionListener{
 		customizationScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
 		
 		playerAviURLs = new String[4];
-		playerAviURLs[0] = "https://i.ibb.co/2WgZzh4/t-oak.gif"; // p1
-		playerAviURLs[1] = "https://i.ibb.co/J21R6DJ/thumbsup.jpg"; // p2
-		playerAviURLs[2] = "https://i.ibb.co/wW6mc9S/alucard.jpg"; // p3
-		playerAviURLs[3] = "https://i.ibb.co/nRqFGSw/lain.png"; // p4
+		playerAviURLs[0] = "https://i.ibb.co/KyMJLB1/t-oak-150.png"; // p1
+		playerAviURLs[1] = "https://i.ibb.co/PW5RkVR/thumbsup-150.jpg"; // p2
+		playerAviURLs[2] = "https://i.ibb.co/4SsXgrj/alucard-150.jpg"; // p3
+		playerAviURLs[3] = "https://i.ibb.co/093ZHMy/lain-150.png"; // p4
 		
 		// copy party to private variable party, will return in welcomePanel handler
 		// also will instantiate all party members
@@ -100,7 +100,7 @@ public class CustomizationMenu implements ActionListener{
 		// add label
 		JLabel howManyPlayers = new JLabel("How many players?");
 		howManyPlayers.setForeground(Color.WHITE);
-		howManyPlayers.setFont(new Font("Monaco", Font.BOLD, 20));
+		howManyPlayers.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
 		howManyPlayers.setBorder(BorderFactory.createCompoundBorder(
 				howManyPlayers.getBorder(), 
 		        BorderFactory.createEmptyBorder(10, 10, 10, 50)));
@@ -125,13 +125,13 @@ public class CustomizationMenu implements ActionListener{
 		for(int i = 0; i < getNumPlayers(); i++) {
 			JLabel playerNameLabel = new JLabel("Player " + (i + 1) + "'s name:");
 			playerNameLabel.setForeground(Color.WHITE);
-			playerNameLabel.setFont(new Font("Monaco", Font.BOLD, 20));
+			playerNameLabel.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
 			playerNameLabel.setBorder(BorderFactory.createCompoundBorder(
 					playerNameLabel.getBorder(), 
 			        BorderFactory.createEmptyBorder(10, 10, 10, 30)));
 			playerNameFields[i] = new JTextField();
 			playerNameFields[i].setForeground(Color.WHITE);
-			playerNameFields[i].setFont(new Font("Monaco", Font.BOLD, 20));
+			playerNameFields[i].setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
 			playerNameFields[i].setBackground(windowColor);
 			playerNameFields[i].setBorder(BorderFactory.createCompoundBorder(
 					playerNameFields[i].getBorder(), 
@@ -145,7 +145,7 @@ public class CustomizationMenu implements ActionListener{
 		submitNames = new JButton("END");
 		submitNames.setBackground(windowColor);
 		submitNames.setForeground(Color.WHITE);
-		submitNames.setFont(new Font("Monaco", Font.BOLD, 20));
+		submitNames.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
 		submitNames.addActionListener(new MenuListener());
 		submitNames.addKeyListener(enter);
 		namePanel.add(submitNames);
@@ -160,7 +160,7 @@ public class CustomizationMenu implements ActionListener{
  		JButton classScreenTitle = new JButton("Choose your class"); // not really a button
  		classScreenTitle.setBackground(windowColor);
  		classScreenTitle.setForeground(Color.WHITE);
- 		classScreenTitle.setFont(new Font("Monaco", Font.BOLD, 20));
+ 		classScreenTitle.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
  		classScreenTitle.setPreferredSize(new Dimension(900, 100));
  		classScreenTitle.setEnabled(false);
  		subClassPanel.add(classScreenTitle);
@@ -176,23 +176,23 @@ public class CustomizationMenu implements ActionListener{
  		    JRadioButton warriorButton = new JRadioButton("Warrior");
  		    warriorButton.setBackground(windowColor);
  		    warriorButton.setForeground(Color.WHITE);
- 		    warriorButton.setFont(new Font("Monaco", Font.BOLD, 15));
+ 		    warriorButton.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 15));
  		    warriorButton.setActionCommand("Warrior");
  		    warriorButton.setSelected(true);
  		    JRadioButton archerButton = new JRadioButton("Archer");
  		    archerButton.setBackground(windowColor);
  		    archerButton.setForeground(Color.WHITE);
- 		    archerButton.setFont(new Font("Monaco", Font.BOLD, 15));
+ 		    archerButton.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 15));
  		    archerButton.setActionCommand("Archer");
 		    JRadioButton mageButton = new JRadioButton("Mage");
 		    mageButton.setBackground(windowColor);
 		    mageButton.setForeground(Color.WHITE);
-		    mageButton.setFont(new Font("Monaco", Font.BOLD, 15));
+		    mageButton.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 15));
 		    mageButton.setActionCommand("Mage");
 		    JRadioButton clericButton = new JRadioButton("Cleric");
 		    clericButton.setBackground(windowColor);
 		    clericButton.setForeground(Color.WHITE);
-		    clericButton.setFont(new Font("Monaco", Font.BOLD, 15));
+		    clericButton.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 15));
 		    clericButton.setActionCommand("Cleric");
 		    classRBGroups[i] = new ButtonGroup();
 		    classRBGroups[i].add(warriorButton);
@@ -210,7 +210,7 @@ public class CustomizationMenu implements ActionListener{
  		submitClasses = new JButton("SUBMIT");
  		submitClasses.setBackground(windowColor);
  		submitClasses.setForeground(Color.WHITE);
- 		submitClasses.setFont(new Font("Monaco", Font.BOLD, 20));
+ 		submitClasses.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
  		submitClasses.addActionListener(new MenuListener());
  		submitClasses.addKeyListener(enter);
  		
@@ -222,12 +222,15 @@ public class CustomizationMenu implements ActionListener{
 	private void buildWelcomePanel() {
 		welcomePanel = new JPanel(new GridBagLayout());
 		welcomePanel.setBackground(bgColor);
+		welcomePanel.setBorder(BorderFactory.createCompoundBorder(
+				welcomePanel.getBorder(), 
+		        BorderFactory.createEmptyBorder(10, 10, 10, 10)));
 		GridBagConstraints c = new GridBagConstraints();
 		
 		JButton classScreenTitle = new JButton("Welcome to NEXT GEN RPG"); // not really a button
  		classScreenTitle.setBackground(windowColor);
  		classScreenTitle.setForeground(Color.WHITE);
- 		classScreenTitle.setFont(new Font("Monaco", Font.BOLD, 27));
+ 		classScreenTitle.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 27));
  		classScreenTitle.setPreferredSize(new Dimension(1000, 100));
  		classScreenTitle.setEnabled(false);
  		c.gridx = 0;
@@ -262,11 +265,11 @@ public class CustomizationMenu implements ActionListener{
  			JLabel playerName = new JLabel();
  			playerName.setBackground(windowColor);
  			playerName.setForeground(Color.WHITE);
- 			playerName.setFont(new Font("Monaco", Font.BOLD, 20));
+ 			playerName.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
  			JLabel playerClass = new JLabel();
  			playerClass.setBackground(windowColor);
  			playerClass.setForeground(Color.WHITE);
- 			playerClass.setFont(new Font("Monaco", Font.BOLD, 20));
+ 			playerClass.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
  			// add info to labels
  			playerName.setText(playerName.getText() + playerNames[i]);
  			playerClass.setText(playerClass.getText() + playerClasses[i]);
@@ -290,7 +293,7 @@ public class CustomizationMenu implements ActionListener{
  		finalConfirmation = new JButton("CONTINUE");
  		finalConfirmation.setBackground(windowColor);
  		finalConfirmation.setForeground(Color.WHITE);
- 		finalConfirmation.setFont(new Font("Monaco", Font.BOLD, 20));
+ 		finalConfirmation.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
  		finalConfirmation.addActionListener(new MenuListener());
  		finalConfirmation.addKeyListener(enter);
 		

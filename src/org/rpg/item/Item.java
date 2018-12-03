@@ -2,9 +2,15 @@ package org.rpg.item;
 
 public abstract class Item {
 	
-	private String name;
-	private String description;
-	private int rarity;
+	protected String name;
+	protected String description;
+	protected int rarity;
+	
+	public Item() {
+		name = "test";
+		description = "a test item";
+		rarity = 0;
+	}
 	
 	public String getName() { return name; }
 	public void setName(String name) { this.name = name; }

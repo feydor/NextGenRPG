@@ -17,11 +17,12 @@ public class Driver2 {
 		Party party = new Party();
 		Tile worldFrame = new Tile(party);
 		CustomizationMenu customizationMenu = null;
+		PartyMenu partyMenu = new PartyMenu(party);
 		
 
 		boolean isRunning = true;
 		while(isRunning) {
-			stateMachine.Update(titleScreen, worldFrame, customizationMenu, party);
+			stateMachine.Update(titleScreen, worldFrame, customizationMenu, partyMenu, party);
 		        //render();
 		     Thread.sleep(10); //the timing mechanism
 		}

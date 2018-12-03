@@ -41,6 +41,8 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 public class Tile extends JPanel implements TileIndex{
+	
+		JFrame frame;
 	    // FIXME: need to find a way of changing this url
 		private String sheetLocation = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/tiles/dark.png";
 		private BufferedImage tileSheet; // tileSheet for splitting, laoded from file at sheetLocation
@@ -84,6 +86,7 @@ public class Tile extends JPanel implements TileIndex{
 	    private static final int SCREEN_HEIGHT = 1024;
     	
     public Tile(Party party) {
+    	frame = new JFrame();
     	partyOverWorld = party;
     	world = new Space[ROWS][COLS];
     	// load with integers indexes and corresponding bg image 
@@ -320,13 +323,13 @@ public class Tile extends JPanel implements TileIndex{
      }
     
     public void updateFrame() {
-    	JFrame f = new JFrame();
+    	//frame = new JFrame();
     	KeyBinding mainPanel = new KeyBinding(); 
-        f.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-        f.setTitle("The World");
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.setContentPane(new Tile(partyOverWorld));
-        f.setVisible(true);	
+    	frame.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+    	frame.setTitle("The World");
+    	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    	frame.setContentPane(new Tile(partyOverWorld));
+    	frame.setVisible(true);	
         
         // open the sound file as a Java input stream
         BufferedInputStream audioStream;
@@ -349,6 +352,8 @@ public class Tile extends JPanel implements TileIndex{
         @Override
         public void keyTyped(KeyEvent e) {
            if (e.getKeyChar() == KeyEvent.VK_ENTER) {
+        	   // Enter the Party Menu
+        	   //frame.dispose();
         	   showMenu = true;
            }
         }

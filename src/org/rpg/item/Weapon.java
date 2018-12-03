@@ -10,6 +10,12 @@ public class Weapon extends EquipableItem{
 		this.atkVal = 0;
 	}
 	
+	public Weapon(String name, String description, int slot) {
+		setName(name);
+		setSlot(slot);
+		setDescription(description);
+	}
+	
 	//setters and getters
 	public int getAtk() {
 		return this.atkVal;

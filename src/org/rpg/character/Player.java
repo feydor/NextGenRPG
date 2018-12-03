@@ -56,16 +56,18 @@ public class Player extends PlayableCharacter implements Serializable{
 	public void addXP(int monsterXP) { XP += monsterXP; }
 	
 	
+	// FIXME: Slot can be overwritten right now.
 	public void addEquipment(EquipableItem eq) {
+		equipment.add(eq.getSlot(), eq);
 		// if equipment arraylist already has equipment in index[eq.getSlot()]
 		// replace it
-		if(equipment.get(eq.getSlot()) == null) {
+		/*if(equipment.get(eq.getSlot()) == null) {
 			// arrayList slot is empty, add equipment
 			equipment.add(eq.getSlot(), eq);
 		} else {
-			// arrayList slot is occupied, do not equipment
+			// arrayList slot is occupied, do not get equipment
 			System.out.println("Equipment slot taken by: " + equipment.get(eq.getSlot()));
-		}
+		}*/
 		
 	}
 	
@@ -182,7 +184,7 @@ public class Player extends PlayableCharacter implements Serializable{
 		
 		Player magePlayer = new Player("Mage");
 		Player warPlayer = new Player("Warrior");
-		Player rangePlayer = new Player("Ranged");
+		Player rangePlayer = new Player("Archer");
 		Player clericPlayer = new Player("Cleric");
 		dPlayer.setName("Hiro");
 		magePlayer.setName("WizKid");

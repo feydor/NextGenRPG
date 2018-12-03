@@ -7,12 +7,16 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.border.LineBorder;
+
+import org.rpg.item.Item;
 
 public class ButtonPane extends JPanel {
 
@@ -30,7 +34,7 @@ public class ButtonPane extends JPanel {
             buttonsGrid[i][j] = new JButton(i + ", " + j);
             buttonsGrid[i][j].setBackground(fgColor);
             buttonsGrid[i][j].setForeground(Color.WHITE);
-            buttonsGrid[i][j].setFont(new Font("Monaco", Font.BOLD, 20));
+            buttonsGrid[i][j].setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
             buttonsGrid[i][j].addKeyListener(enter);
             buttonsGrid[i][j].addKeyListener(new KeyAdapter() {
                @Override
@@ -62,22 +66,36 @@ public class ButtonPane extends JPanel {
       }
    }
    
-   public ButtonPane(String option, Color fgColor) {
-	   super(new GridLayout(4, 0));
+   public ButtonPane(String option, Color fgColor, int number) {
+	   super(new GridLayout(number, 0));
 	   this.setBackground(Color.BLACK);
 	   switch(option) {
-	   		case "playerNum": 
-	   			createNumPlayersButtons(fgColor);
-	   			break;
-	   		case "title":
-	   			createTitleButtons(fgColor);
-	   			break;
+  		case "playerNum": 
+  			createNumPlayersButtons(fgColor);
+  			break;
+  		case "title":
+  			createTitleButtons(fgColor);
+  			break;
+  		case "partyMenu":
+  			createPartyMenuButtons(fgColor);
+  			break;
 	   }
+   }
+   
+   public ButtonPane(String option, Color fgColor) {
+	   this(option, fgColor, 6);
+   }
+   
+   // for inventory buttons
+   public ButtonPane(Color fgColor, ArrayList<Item> totalInventory) {
+	   super(new GridLayout(totalInventory.size(), 0));
+	   this.setBackground(Color.BLACK);
+	   createInventoryButtons(fgColor, totalInventory);
    }
    
 
 
-   private void createNumPlayersButtons(Color fgColor) {
+private void createNumPlayersButtons(Color fgColor) {
 	   
 	   buttons = new JButton[4];
 	   buttons[0] = new JButton("4 (Normal)");
@@ -90,7 +108,7 @@ public class ButtonPane extends JPanel {
             final int curCol = 0;
             buttons[i].setBackground(fgColor);
             buttons[i].setForeground(Color.WHITE);
-            buttons[i].setFont(new Font("Monaco", Font.BOLD, 20));
+            buttons[i].setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
             buttons[i].setBorder(BorderFactory.createCompoundBorder(
             		buttons[i].getBorder(), 
 			        BorderFactory.createEmptyBorder(10, 10, 10, 10)));
@@ -127,7 +145,7 @@ public class ButtonPane extends JPanel {
             final int curCol = 0;
             buttons[i].setBackground(fgColor);
             buttons[i].setForeground(Color.WHITE);
-            buttons[i].setFont(new Font("Monaco", Font.BOLD, 20));
+            buttons[i].setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
             buttons[i].setBorder(BorderFactory.createCompoundBorder(
             		buttons[i].getBorder(), 
 			        BorderFactory.createEmptyBorder(10, 10, 10, 10)));
@@ -152,6 +170,80 @@ public class ButtonPane extends JPanel {
             add(buttons[i]);
 	      }
 		
+	}
+	
+	private void createPartyMenuButtons(Color fgColor) {
+		buttons = new JButton[6];
+		buttons[0] = new JButton("PARTY");
+	    buttons[1] = new JButton("INVENTORY");
+	    buttons[2] = new JButton("EQUIPMENT MENU");
+	    buttons[3] = new JButton("SAVE");
+	    buttons[4] = new JButton("EXIT");
+	    buttons[5] = new JButton("QUIT GAME");
+	    
+	    for (int i = 0; i < buttons.length; i++) {
+            final int curRow = i;
+            final int curCol = 0;
+            buttons[i].setBackground(fgColor);
+            buttons[i].setForeground(Color.WHITE);
+            buttons[i].setBorder(new LineBorder(Color.WHITE));
+            buttons[i].setFont(new Font("Monaco", Font.TRUETYPE_FONT, 14));
+            buttons[i].addKeyListener(enter);
+            buttons[i].addKeyListener(new KeyAdapter() {
+               @Override
+               public void keyPressed(KeyEvent e) {
+                  switch (e.getKeyCode()) {
+                  case KeyEvent.VK_UP:
+                      if (curRow > 0)
+                    	  buttons[curRow - 1].requestFocus();
+                      break;
+                   case KeyEvent.VK_DOWN:
+                      if (curRow < buttons.length - 1)
+                    	  buttons[curRow + 1].requestFocus();
+                      break;
+                  default:
+                     break;
+                  }
+               }
+            });
+            add(buttons[i]);
+	      }
+		
+	}
+	
+	private void createInventoryButtons(Color fgColor, ArrayList<Item> totalInventory) {
+		buttons = new JButton[totalInventory.size()]; 
+		
+		for (int i = 0; i < buttons.length; i++) {
+			buttons[i] = new JButton();
+			String itemName = totalInventory.get(i).getName() + " : " + totalInventory.get(i).getDescription();
+			buttons[i].setText(buttons[i].getText() + itemName);
+            final int curRow = i;
+            final int curCol = 0;
+            buttons[i].setBackground(fgColor);
+            buttons[i].setForeground(Color.WHITE);
+            buttons[i].setBorder(new LineBorder(Color.WHITE));
+            buttons[i].setFont(new Font("Monaco", Font.TRUETYPE_FONT, 14));
+            buttons[i].addKeyListener(enter);
+            buttons[i].addKeyListener(new KeyAdapter() {
+               @Override
+               public void keyPressed(KeyEvent e) {
+                  switch (e.getKeyCode()) {
+                  case KeyEvent.VK_UP:
+                      if (curRow > 0)
+                    	  buttons[curRow - 1].requestFocus();
+                      break;
+                   case KeyEvent.VK_DOWN:
+                      if (curRow < buttons.length - 1)
+                    	  buttons[curRow + 1].requestFocus();
+                      break;
+                  default:
+                     break;
+                  }
+               }
+            });
+            add(buttons[i]);
+	      }
 	}
    
    public JButton[] getNumberButtons() {
