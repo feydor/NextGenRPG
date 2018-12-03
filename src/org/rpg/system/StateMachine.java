@@ -109,6 +109,7 @@ public class StateMachine {
 		    		  partyMenu.setParty(party);
 			    	  partyMenu.update();	 
 		    	  } else {
+		    		  worldFrame.setParty(party);
 		    		  currentState = state.OVERWORLD_STATE;
 		    	  }
 		          /*if(player.isAttacked()) {

@@ -9,7 +9,7 @@ import org.rpg.combat.Combat;
 import org.rpg.menu.Input;
 import org.rpg.menu.MainMenu;
 
-public class OverWorld extends Input implements Sprite {
+public class OverWorld extends Input {
 	
 	// Space class has methods such as hasTreasure, hasNPC, etc
 	private Space grid[][];

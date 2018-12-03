@@ -79,6 +79,9 @@ public class ButtonPane extends JPanel {
   		case "partyMenu":
   			createPartyMenuButtons(fgColor);
   			break;
+  		case "combat":
+  			createCombatButtons(fgColor);
+  			break;
 	   }
    }
    
@@ -244,6 +247,43 @@ private void createNumPlayersButtons(Color fgColor) {
             });
             add(buttons[i]);
 	      }
+	}
+	
+	private void createCombatButtons(Color fgColor) {
+		buttons = new JButton[4];
+		buttons[0] = new JButton("FIGHT");
+	    buttons[1] = new JButton("ABILITIES");
+	    buttons[2] = new JButton("FLEE");
+	    buttons[3] = new JButton("SKIP TURN");
+
+	    for (int i = 0; i < buttons.length; i++) {
+            final int curRow = i;
+            final int curCol = 0;
+            buttons[i].setBackground(fgColor);
+            buttons[i].setForeground(Color.WHITE);
+            buttons[i].setBorder(new LineBorder(Color.WHITE));
+            buttons[i].setFont(new Font("Monaco", Font.TRUETYPE_FONT, 14));
+            buttons[i].addKeyListener(enter);
+            buttons[i].addKeyListener(new KeyAdapter() {
+               @Override
+               public void keyPressed(KeyEvent e) {
+                  switch (e.getKeyCode()) {
+                  case KeyEvent.VK_UP:
+                      if (curRow > 0)
+                    	  buttons[curRow - 1].requestFocus();
+                      break;
+                   case KeyEvent.VK_DOWN:
+                      if (curRow < buttons.length - 1)
+                    	  buttons[curRow + 1].requestFocus();
+                      break;
+                  default:
+                     break;
+                  }
+               }
+            });
+            add(buttons[i]);
+	      }
+		
 	}
    
    public JButton[] getNumberButtons() {

@@ -58,6 +58,10 @@ public class Tile extends JPanel implements TileIndex{
     	private Map<Dir, Boolean> dirMap = new EnumMap<>(Dir.class); // directions map
     	private Timer animationTimer = new Timer(TIMER_DELAY, new AnimationListener()); 
         String bgMusic = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/music/Xak.wav";
+        private Clip clip; // music player
+        private BufferedInputStream audioStream;
+        private InputStream in;
+        private AudioInputStream audioIn;
     	 
 		private final int TILE_WIDTH = 32; // e.g. 64x64, 32x32, 16x16, etc
     	private final int TILE_HEIGHT = 32;
@@ -82,8 +86,8 @@ public class Tile extends JPanel implements TileIndex{
 	    private static final String PRESSED = "pressed";
 	    private static final String RELEASED = "released";
 	    
-	    private static final int SCREEN_WIDTH = 1280; // px
-	    private static final int SCREEN_HEIGHT = 1024;
+	    protected static final int SCREEN_WIDTH = 1280; // px
+	    protected static final int SCREEN_HEIGHT = 1024;
     	
     public Tile(Party party) {
     	frame = new JFrame();
@@ -114,6 +118,10 @@ public class Tile extends JPanel implements TileIndex{
 		showMenu = false;
 		this.setFocusable(true);
 		this.addKeyListener(menuEnter);
+		
+	
+        
+		
     }
     
     public Tile() {} // needed for Combat extension of Tile
@@ -254,13 +262,20 @@ public class Tile extends JPanel implements TileIndex{
            }
            if(spriteX != newX || spriteY != newY) {
         	   // Random Encounters here
-        	   if (Math.random() < 0.01) {
+        	   System.out.println(partyOverWorld.getParty().get(1).getName());
+	    		  System.out.println(partyOverWorld.getParty().get(4).getName());
+        	   if (Math.random() < 0.01 && !partyOverWorld.isInCombat()) {
            	    System.out.println("Prepare to fight!");
-   				//Combat combat = new Combat();
+   				Combat combat = new Combat();
+   				combat.update(partyOverWorld);
    				partyOverWorld.setInCombat(true);			
    				//combat.enterCombat(partyOverWorld, partyOverWorld.getPartyXpos(), partyOverWorld.getPartyYpos(), world);
    				//partyOverWorld.clearEnemies();
-   				partyOverWorld.setInCombat(false);
+   				//partyOverWorld.setInCombat(false);
+   				
+   				//turn off music
+   				//clip.stop();
+   				
    			}
            }
            spriteX = newX;
@@ -330,13 +345,9 @@ public class Tile extends JPanel implements TileIndex{
     	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     	frame.setContentPane(new Tile(partyOverWorld));
     	frame.setVisible(true);	
-        
-        // open the sound file as a Java input stream
-        BufferedInputStream audioStream;
-        InputStream in;
-        AudioInputStream audioIn;
-        Clip clip;
-		try {
+    	
+    	// open the sound file as a Java input stream
+    	try {
 			in = new FileInputStream(bgMusic);
 			audioStream = new BufferedInputStream(in);
 			audioIn = AudioSystem.getAudioInputStream(audioStream);
@@ -346,6 +357,7 @@ public class Tile extends JPanel implements TileIndex{
 		} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e1) {
 			e1.printStackTrace();
 		}
+    
     }
     
     private KeyListener menuEnter = new KeyAdapter() {
@@ -371,8 +383,14 @@ public class Tile extends JPanel implements TileIndex{
     
     public static void main(String avg[]) throws IOException {
     	Player p1 = new Player("Warrior");
+    	Player p2 = new Player("Warrior");
+    	Player p3 = new Player("Warrior");
+    	Player p4 = new Player("Warrior");
     	Party p = new Party();
     	p.addPartyMember(1, p1);
+    	p.addPartyMember(2, p2);
+    	p.addPartyMember(3, p3);
+    	p.addPartyMember(4, p4);
     	Tile worldFrame = new Tile(p);
     	SwingUtilities.invokeLater(new Runnable() {
             public void run() {
