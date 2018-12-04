@@ -18,8 +18,16 @@ public class Spell extends Abilities {
 			this.range = 0;
 		}
 		
-		//setters and getters
+		//overloaded constructor
+		public Spell(String aName, String aDesc, int aCost, int aDuration, int aRange) {
+			this.name = aName;
+			this.desc = aDesc;
+			this.cost = aCost;
+			this.duration = aDuration;
+			this.range = aRange;
+		}
 		
+		//setters and getters
 		public String getDescription() {
 			return this.desc;
 		}
