@@ -15,22 +15,22 @@ public class Abilities {
 		
 		//create a collection of abilities
 		//start creating some skills
-		Skill basicMelee = new Skill(); //0
-			//set up the fields
-			basicMelee.setName("Basic Melee Attack");
-			basicMelee.setDescription("Attack the target enemy.");
-			basicMelee.setCooldown(0);
-			basicMelee.setDuration(0);
-			basicMelee.setRange(1);
-			skillList.add(basicMelee);
-		Skill basicRanged = new Skill(); //1
-			//set up the fields
-			basicRanged.setName("Basic Ranged Attack");
-			basicRanged.setDescription("Attack the target enemy.");
-			basicRanged.setCooldown(0);
-			basicRanged.setDuration(0);
-			basicRanged.setRange(5);
-			skillList.add(basicRanged);
+//		Skill basicMelee = new Skill(); //0
+//			//set up the fields
+//			basicMelee.setName("Basic Melee Attack");
+//			basicMelee.setDescription("Attack the target enemy.");
+//			basicMelee.setCooldown(0);
+//			basicMelee.setDuration(0);
+//			basicMelee.setRange(1);
+//			skillList.add(basicMelee);
+//		Skill basicRanged = new Skill(); //1
+//			//set up the fields
+//			basicRanged.setName("Basic Ranged Attack");
+//			basicRanged.setDescription("Attack the target enemy.");
+//			basicRanged.setCooldown(0);
+//			basicRanged.setDuration(0);
+//			basicRanged.setRange(5);
+//			skillList.add(basicRanged);
 //		Skill taunt = new Skill(); //2
 //			//set up the fields
 //			taunt.setName("Taunt");
@@ -113,14 +113,14 @@ public class Abilities {
 //			skillList.add(disarm);
 			
 		//start creating some spells	
-		Spell basic = new Spell(); //0
-			//set up the fields
-			basic.setName("Basic Attack");
-			basic.setDescription("Attack the target enemy.");
-			basic.setMPCost(0);
-			basic.setDuration(0);
-			basic.setRange(5);
-			spellList.add(basic);
+//		Spell basic = new Spell(); //0
+//			//set up the fields
+//			basic.setName("Basic Attack");
+//			basic.setDescription("Attack the target enemy.");
+//			basic.setMPCost(0);
+//			basic.setDuration(0);
+//			basic.setRange(5);
+//			spellList.add(basic);
 //		Spell fireball = new Spell(); //1
 //			//set up the fields
 //			fireball.setName("Fireball");
