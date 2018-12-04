@@ -190,7 +190,7 @@ public class Combat extends Tile{
 	}
 	
 
-	public void damageAmt(PlayableCharacter chr, int amt)
+	public static void damageAmt(PlayableCharacter chr, int amt)
 	{
 		chr.setCurrentHP(chr.getCurrentHP() - 2);
 	}
@@ -348,86 +348,14 @@ public class Combat extends Tile{
 			System.out.println("enemy.getYpos() = " + enemy.getYpos());
 			System.out.println("enemy name = " + enemy.getName());
 		}
-		
-		
-		
-//		System.out.print(MARGINS);
-//		for(int i = 0; i < ROWS; i++) {          
-//		    for(int j = 0; j < COLUMNS; j++) {
-//		        grid[i][j] = new Space(FIELD_CHAR);
-//		        
-//		        // make walls
-//		        if(i == 0 || i == maxHeight || j == 0 || j == maxWidth) {
-//		        	grid[i][j] = new Space(WALLS_CHAR);
-//		        }
-//		        
-//		        // test NPC
-//		        grid[8][8] = new Space(NPC_CHAR);
-//		        
-//		        // test Terrain
-//		        grid[2][8] = new Space(TERRAIN_CHAR);
-//		        grid[3][8] = new Space(TERRAIN_CHAR);
-//		        grid[3][9] = new Space(TERRAIN_CHAR);
-//		        grid[3][7] = new Space(TERRAIN_CHAR);
-//		        grid[4][8] = new Space(TERRAIN_CHAR);
-//
-//		        grid[maxHeight - 1][maxWidth - 1] = new Space(ITEM_CHAR);
-//		        
-//		        for(Map.Entry<Integer, Player> entry : party.getParty().entrySet())
-//		        {
-//		        	grid[entry.getValue().getYpos()][entry.getValue().getXpos()] = new Space(entry.getKey());
-//		        }
-//		        for(int z = 0; z < party.getEnemies().size(); z++)
-//		        {
-//		        	switch(z)
-//		        	{
-//		        	case 0:
-//		        		party.getEnemies().get(z).setSSprite("@");
-//		        		break;
-//		        	case 1:
-//		        		party.getEnemies().get(z).setSSprite("$");
-//		        		break;
-//		        	case 2:
-//		        		party.getEnemies().get(z).setSSprite("&");
-//		        		break;
-//		        	case 3:
-//		        		party.getEnemies().get(z).setSSprite("%");
-//		        		break;
-//		        	}
-//		        	grid[party.getEnemies().get(z).getYpos()][party.getEnemies().get(z).getXpos()] = new Space(party.getEnemies().get(z).getSSprite());
-//		        }
-//		        
-//		        if (!grid[i][j].hasPlayer())
-//		        {
-//		        	System.out.print(PIXEL_DIST + grid[i][j].getSprite());
-//		        }
-//		        else
-//		        {
-//		        	System.out.print(PIXEL_DIST + grid[i][j].getSSprite());
-//		        }
-//		    }
-//		    System.out.print("\n" + MARGINS);         
-//		}
-//		System.out.print("\n");
-//				
-//		System.out.println("----------------------------------------------------------------------------------------------------------\n"+
-//				"+-----------------------+\n" + 
-//				"| "+ party.getParty().get("1").getName()+ "'s turn" + " Player: 1" + "\n" + 
-//				"+-----------------------+\n" + 
-//				"+-----------------------+  +-----------------------+  +-----------------------+  +-----------------------+\n" + 
-//				"| Abilities:                       "+ "Enemy @"+"               "+"Enemy $"+"                  "+"Enemy &\n"+
-//				"+-----------------------+  +-----------------------+  +-----------------------+  +-----------------------+\n" + 
-//				" # (1) Basic Attack                  HP: "+ party.getEnemies().get(0).getCurrentHP() +"/"+party.getEnemies().get(0).getHP() +"              HP: " + party.getEnemies().get(1).getCurrentHP() +"/" +party.getEnemies().get(1).getHP() +"              HP: " + party.getEnemies().get(2).getCurrentHP() +"/" +party.getEnemies().get(2).getHP() +"\n" +
-//				" # (flee) Attempt escape\n"+
-//				" # (skip) Skip turn\n");
 	}
 	
-	public void enterCombat(Party party, int xpos, int ypos, Space grid[][])
+	public void enterCombat(Party party, int xpos, int ypos)
 	{	
 		Boolean enemiesAlive = true;
-		Combat combat = new Combat();
+		//Combat combat = new Combat(); // TODO: Not sure if combat should be instantiated here or in Tile with random encounters
 		
-		instantiateCombat(party, xpos, ypos, grid);
+		instantiateCombat(party, xpos, ypos);
 		
 		while (enemiesAlive)
 		{
@@ -438,7 +366,7 @@ public class Combat extends Tile{
 				
 				while (!nextTurn)
 				{
-					updateMapforCombat(party, entry, grid, xpos, ypos);
+					// updateMapforCombat(party, entry, grid, xpos, ypos);
 					System.out.println("What will you do "+ entry.getValue().getName() + "? WASD MOVES LEFT: " + (entry.getValue().getSpeed() - currentMoves)); 
 					this.queryUser();
 					switch(choice)
@@ -523,7 +451,7 @@ public class Combat extends Tile{
 							System.out.println("Escape failed! -2 Health to every party member!");
 							for(Map.Entry<Integer, Player> member : party.getParty().entrySet())
 							{
-								combat.damageAmt(member.getValue(), 2);
+								Combat.damageAmt(member.getValue(), 2);
 							}
 						}
 						break;
@@ -598,14 +526,36 @@ public class Combat extends Tile{
 			} else if(source.equals(combatPane.getNumberButtons()[1])) {
 				// handleAbilities();
 			} else if(source.equals(combatPane.getNumberButtons()[2])) {
-				// handleFlee();
+				handleFlee();
 			} else if(source.equals(combatPane.getNumberButtons()[3])) {
 				// handleSkip();
 			} else if(source.equals(combatPane.getNumberButtons()[4])) {
 				// ...
 			} 
-			
 		}	
+		
+		private void handleFlee() {
+			if ( ((int)(Math.random() * 100) + 1) > party.getFleeChance())
+			{
+				// quit combat
+				combatScreen.remove(combatPanel);
+				combatScreen.dispose();
+				try {
+					fightMusic.stop();
+				} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+					e.printStackTrace();
+				}
+				
+			}
+		else
+		{
+			// display Escape failed message, -2 health to all party members
+			System.out.println("Escape failed! -2 Health to every party member!");
+			for(Map.Entry<Integer, Player> member : party.getParty().entrySet()) {
+				Combat.damageAmt(member.getValue(), 2);
+			}
+		}
+		}
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -650,9 +600,24 @@ public class Combat extends Tile{
 	    		System.out.println("party.getPartyXpos() = " + party.getPartyXpos());
 	    		System.out.println("party.getPartyYpos() = " + party.getPartyYpos());
 	    		
-	    		g.drawImage(player.getValue().getSprite(), party.getPartyXpos(), party.getPartyXpos(), null);
+	    		g.drawImage(player.getValue().getSprite(), party.getPartyXpos(), party.getPartyYpos(), null);
 	    		party.setPartyYpos(party.getPartyYpos() + 64);
 	    		i++;
+	    	}
+	    	
+	    	for(NPC enemy : party.getEnemies()) {
+	    		System.out.println("enemy name = " + enemy.getName());
+	    		System.out.println("BEFORE CONVERSION: enemy.getXpos() = " + enemy.getXpos());
+	    		System.out.println("BEFORE: enemy.getYpos() = " + enemy.getYpos());
+	    		
+	    		// Reconvert block units back to pixel units (block units come from instantiateCombat())
+	     		int xpos = enemy.getXpos() * (SCREEN_WIDTH / COLS); // xposPX / 32
+	     		int ypos = enemy.getYpos() * (SCREEN_HEIGHT / ROWS); 
+	     		
+	     		System.out.println("AFTER CONVERSION: enemy.getXpos() = " + xpos);
+	    		System.out.println("AFTER: enemy.getYpos() = " + ypos);
+	    		
+	    		g.drawImage(enemy.getSprite(), xpos, ypos, null);
 	    	}
 	    }  
 	}

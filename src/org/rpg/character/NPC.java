@@ -16,6 +16,8 @@ public class NPC extends PlayableCharacter{
 	private int droppableMoney;	// constant for now, 100
 	private int dropRate;	// constant for now, 25
 	private String dialogue;
+	
+	private String enemySpriteLoc = "https://i.ibb.co/b2J2vHH/skeleton.png"; // default
 
 	
 	// make default enemy, class = Warrior
@@ -23,6 +25,7 @@ public class NPC extends PlayableCharacter{
 		super();
 		name = "Skeleton";
 		this.type = "Skeleton";
+		sprite = createSprite(enemySpriteLoc);
 		droppableItems = new ArrayList<Item>();
 		droppableXP = 100;
 		droppableMoney = 100;

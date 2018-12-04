@@ -3,6 +3,7 @@ package org.rpg.map;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 import javax.imageio.ImageIO;
 
@@ -17,11 +18,11 @@ public class Space implements TileIndex{
 	// ...
 	private int spriteIndex;
 	private BufferedImage image;
-	private String grassLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/grass.png";
-	private String waterLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/water.png";
-	private String rockLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/rock.png";
-	private String dirtLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/dirt.png";
-	private String pathLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/path.png";
+	private String grassLoc = "https://i.ibb.co/RCVRtBs/grass.png";
+	private String waterLoc = "https://i.ibb.co/zfj1CMR/water.png";
+	private String rockLoc = "https://i.ibb.co/0BNV9VK/rock.png";
+	private String dirtLoc = "https://i.ibb.co/GPQHmtX/dirt.png";
+	private String pathLoc = "https://i.ibb.co/56L473H/path.png";
 
 	private boolean hasTreasure;
 	private boolean hasNPC;
@@ -75,7 +76,7 @@ public class Space implements TileIndex{
 	// takes a fileLocation string and instantiates the private member variable image
     public void loadImageFromFile(String fileLocation) {
     	try {    		
-    		setImage(ImageIO.read(new File(fileLocation)));
+    		setImage(ImageIO.read(new URL(fileLocation)));
 
 		} catch (IOException e) {
 			e.printStackTrace();

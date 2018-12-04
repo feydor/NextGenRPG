@@ -21,7 +21,7 @@ public class Party implements Serializable{
 	private int numPlayers;
 	private boolean inCombat;
 	private int fleeChance;
-	private ArrayList<PlayableCharacter> enemies;
+	private ArrayList<NPC> enemies;
 	private int PartyXpos;
 	private int PartyYpos;
 	
@@ -112,11 +112,11 @@ public class Party implements Serializable{
 		System.out.println();
 	}
 	
-	public ArrayList<PlayableCharacter> getEnemies() {
+	public ArrayList<NPC> getEnemies() {
 		return enemies;
 	}
 
-	public void setEnemies(ArrayList<PlayableCharacter> enemies) {
+	public void setEnemies(ArrayList<NPC> enemies) {
 		this.enemies = enemies;
 	}
 

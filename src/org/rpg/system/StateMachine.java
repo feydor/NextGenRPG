@@ -2,6 +2,7 @@ package org.rpg.system;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 
 import javax.swing.ImageIcon;
 
@@ -55,17 +56,28 @@ public class StateMachine {
 		        	  // NOTE: Instantiate party here with the Debug/Default values
 		        	  UsableItem testItem = new UsableItem();
 		    		   party.setNumPlayers(4);
-		    		   for(int i = 0; i < party.getNumPlayers(); i++) {
-		    			   Player p = new Player("Warrior");
-		    			   p.setName("DEBUG");
-		    			   p.addItem(testItem);
-		    			   try {
-		    				   p.setAvatar(new ImageIcon(new URL("https://i.ibb.co/2WgZzh4/t-oak.gif")));
-		    			   } catch (MalformedURLException e) {
-		    				   e.printStackTrace();
-						   }
-		    			   party.addPartyMember((i + 1), p); // 1, 2, 3, 4
-		    		   }
+		    		   Player p = new Player("Warrior");
+		    		   Player p2 = new Player("Cleric");
+		    		   Player p3 = new Player("Archer");
+		    		   Player p4 = new Player("Mage");
+		    		   p.setName("TREE");	    			   
+	    			   p2.setName("WAH");		    			   
+	    			   p3.setName("DRACULA");		    			   
+	    			   p4.setName("SEL");
+	    			   p.addItem(testItem);
+	    			   try {
+	    				   p.setAvatar(new ImageIcon(new URL("https://i.ibb.co/2WgZzh4/t-oak.gif")));
+	    				   p2.setAvatar(new ImageIcon(new URL("https://i.ibb.co/PW5RkVR/thumbsup-150.jpg")));
+	    				   p3.setAvatar(new ImageIcon(new URL("https://i.ibb.co/4SsXgrj/alucard-150.jpg")));
+	    				   p4.setAvatar(new ImageIcon(new URL("https://i.ibb.co/093ZHMy/lain-150.png")));
+	    			   } catch (MalformedURLException e) {
+	    				   e.printStackTrace();
+					   }
+		    		   party.addPartyMember(1, p); 
+		    		   party.addPartyMember(2, p2); 
+		    		   party.addPartyMember(3, p3); 
+		    		   party.addPartyMember(4, p4);
+		    		   
 		        	  // create next frame here
 		        	  worldFrame.setParty(party);
 		        	  worldFrame.updateFrame();
@@ -74,7 +86,7 @@ public class StateMachine {
 		          
 		          break;
 		       case CUSTOMIZATION_STATE:
-		           
+		    	   
 		    	   if(customizationMenu.customizationComplete) { 
 		    		   System.out.println("changing state to OVERWORLD");
 		    		   currentState = state.OVERWORLD_STATE;
@@ -104,6 +116,21 @@ public class StateMachine {
 		    	   
 		    	   break;
 		       case OVERWORLD_STATE:
+		    	  // set sprites for each party member, only displayed in Combat
+		    	  for(int i = 0; i < party.getParty().size(); i++) {
+		    		  String spriteUrl = "https://i.ibb.co/2gHDX0p/alucard.png";
+		    		  if((i + 1) == 2) {
+		    			  spriteUrl = "https://i.ibb.co/hHK4nDB/oak-mancer.png";
+		    		  } else if((i + 1) == 3) { // p2
+		    			  spriteUrl = "https://i.ibb.co/1Yc1L1Y/wario.png";
+		    		  } else if((i + 1) == 4) { // p3
+		    			  spriteUrl = "https://i.ibb.co/hdzBgVj/alucard-2.png";
+		    		  } else if((i + 1) == 5) { // p4
+		    			  spriteUrl = "https://i.ibb.co/LrBn4Vx/lain-bear.png";
+		    		  }
+		    		  party.getParty().get(i + 1).setSprite(spriteUrl);
+		    	  }
+
 		    	  if(worldFrame.showMenu) {
 		    		  currentState = state.PARTY_MENU_STATE;
 		    		  partyMenu.setParty(party);
