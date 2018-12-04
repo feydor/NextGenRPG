@@ -18,6 +18,15 @@ public class Skill{
 		this.range = 0;
 	}
 	
+	//overloaded constructor
+	public Skill(String aName, String aDesc, int aCD, int aDuration, int aRange) {
+		this.name = aName;
+		this.desc = aDesc;
+		this.cd = aCD;
+		this.duration = aDuration;
+		this.range = aRange;
+	}
+	
 	//setters and getters
 	
 	public String getDescription() {
