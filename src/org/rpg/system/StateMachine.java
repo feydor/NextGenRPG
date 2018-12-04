@@ -99,6 +99,7 @@ public class StateMachine {
 		    		   Gear gloves = new Gear("Iron Gloves", "Durable, but tough gloves", 2);
 		    		   Gear shoes = new Gear("Iron Boots", "To stomp the enemy with.", 3);
 		    		   Weapon weapon = new Weapon("Iron Sword", "A standard sword.", 4);
+				   Skill attack = new Skill("Melee Attack", "Basic melee attack", 0, 0, 1);
 		    		   party.getParty().get(1).addItem(potion);
 		    		   party.getParty().get(1).addItem(potion);
 		    		   party.getParty().get(1).addItem(levelUp);
@@ -107,6 +108,7 @@ public class StateMachine {
 		    		   party.getParty().get(1).addEquipment(gloves);
 		    		   party.getParty().get(1).addEquipment(shoes);
 		    		   party.getParty().get(1).addEquipment(weapon);
+				   party.getParty().get(1).addSkill(attack);
 		    		   worldFrame.setParty(party);
 		    		   System.out.println("worldframe complete");
 		    		   worldFrame.updateFrame();
