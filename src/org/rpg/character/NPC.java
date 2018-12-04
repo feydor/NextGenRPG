@@ -16,21 +16,19 @@ public class NPC extends PlayableCharacter{
 	private int droppableMoney;	// constant for now, 100
 	private int dropRate;	// constant for now, 25
 	private String dialogue;
-	
-	private String enemySpriteLoc = "https://i.ibb.co/b2J2vHH/skeleton.png"; // default
-
+	private int status;
 	
 	// make default enemy, class = Warrior
 	public NPC() {
 		super();
 		name = "Skeleton";
 		this.type = "Skeleton";
-		sprite = createSprite(enemySpriteLoc);
 		droppableItems = new ArrayList<Item>();
 		droppableXP = 100;
 		droppableMoney = 100;
 		dropRate = 25;
 		dialogue = "**rattles**";
+		status = 0;
 	}
 	
 	public NPC(String type, String kit) {
@@ -41,6 +39,7 @@ public class NPC extends PlayableCharacter{
 		droppableMoney = 100;
 		dropRate = 25;
 		dialogue = "Ur 2 slow!";
+		status = 0;
 	}
 	
 	// full constructor, NOTE: level = 1, XP, money = 0
@@ -53,6 +52,7 @@ public class NPC extends PlayableCharacter{
 		droppableMoney = 100;
 		dropRate = 25;
 		dialogue = "Prepare to die!";
+		status = 0;
 	}
 	
 	///////////////////////////////////////////////////////////////////////////////////
@@ -76,6 +76,9 @@ public class NPC extends PlayableCharacter{
 	
 	public void addDroppableItem(Item item) { droppableItems.add(item); }
 	public void setDroppableItems(ArrayList<Item> items) { droppableItems = items; }
+	
+	public int getStatus() { return status; }
+	public void setStatus(int newStatus) { status = newStatus; }
 	
 	//////////////////////////////////////////////////////////////////////////////////////
 	// Methods
