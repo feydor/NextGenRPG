@@ -8,6 +8,8 @@ import javax.swing.ImageIcon;
 
 import org.rpg.character.Party;
 import org.rpg.character.Player;
+import org.rpg.combat.Combat;
+import org.rpg.combat.Skill;
 import org.rpg.item.EquipableItem;
 import org.rpg.item.Gear;
 import org.rpg.item.UsableItem;
@@ -32,7 +34,7 @@ public class StateMachine {
 	// and create the new frame before switching to the next state, 
 	// see the transition between TITLE_STATE and OVERWORLD_STATE
 	public boolean Update(Title titleScreen, Tile worldFrame, CustomizationMenu customizationMenu, PartyMenu partyMenu,
-			Party party) {
+			Party party, Combat combat) {
 		boolean isRunning = true;
 		
 		if (currentState != null) {
@@ -99,7 +101,7 @@ public class StateMachine {
 		    		   Gear gloves = new Gear("Iron Gloves", "Durable, but tough gloves", 2);
 		    		   Gear shoes = new Gear("Iron Boots", "To stomp the enemy with.", 3);
 		    		   Weapon weapon = new Weapon("Iron Sword", "A standard sword.", 4);
-				   Skill attack = new Skill("Melee Attack", "Basic melee attack", 0, 0, 1);
+				      // Skill attack = new Skill("Melee Attack", "Basic melee attack", 0, 0, 1);
 		    		   party.getParty().get(1).addItem(potion);
 		    		   party.getParty().get(1).addItem(potion);
 		    		   party.getParty().get(1).addItem(levelUp);
@@ -108,7 +110,7 @@ public class StateMachine {
 		    		   party.getParty().get(1).addEquipment(gloves);
 		    		   party.getParty().get(1).addEquipment(shoes);
 		    		   party.getParty().get(1).addEquipment(weapon);
-				   party.getParty().get(1).addSkill(attack);
+		    		   //party.getParty().get(1).addSkill(attack);
 		    		   worldFrame.setParty(party);
 		    		   System.out.println("worldframe complete");
 		    		   worldFrame.updateFrame();
@@ -121,13 +123,13 @@ public class StateMachine {
 		    	  // set sprites for each party member, only displayed in Combat
 		    	  for(int i = 0; i < party.getParty().size(); i++) {
 		    		  String spriteUrl = "https://i.ibb.co/2gHDX0p/alucard.png";
-		    		  if((i + 1) == 2) {
+		    		  if((i + 1) == 1) { // p1
 		    			  spriteUrl = "https://i.ibb.co/hHK4nDB/oak-mancer.png";
-		    		  } else if((i + 1) == 3) { // p2
+		    		  } else if((i + 1) == 2) { // p2
 		    			  spriteUrl = "https://i.ibb.co/1Yc1L1Y/wario.png";
-		    		  } else if((i + 1) == 4) { // p3
+		    		  } else if((i + 1) == 3) { // p3
 		    			  spriteUrl = "https://i.ibb.co/hdzBgVj/alucard-2.png";
-		    		  } else if((i + 1) == 5) { // p4
+		    		  } else if((i + 1) == 4) { // p4
 		    			  spriteUrl = "https://i.ibb.co/LrBn4Vx/lain-bear.png";
 		    		  }
 		    		  party.getParty().get(i + 1).setSprite(spriteUrl);
@@ -137,6 +139,11 @@ public class StateMachine {
 		    		  currentState = state.PARTY_MENU_STATE;
 		    		  partyMenu.setParty(party);
 			    	  partyMenu.update();	 
+		    	  } else if(worldFrame.startCombat) {
+		    		  System.out.println("worldFrame.startCombat");
+		    		  currentState = state.COMBAT_STATE;
+		    		  combat = new Combat();
+		    		  combat.update(worldFrame.getParty(), worldFrame.getWorldMap());
 		    	  } else {
 		    		  worldFrame.setParty(party);
 		    		  currentState = state.OVERWORLD_STATE;
@@ -148,6 +155,14 @@ public class StateMachine {
 		          }*/
 
 		          break;
+		       case COMBAT_STATE:
+		    	   if(combat.endCombat) {
+		    		   worldFrame.startCombat = false;
+			    	   currentState = state.OVERWORLD_STATE;   
+		    	   } else {
+		    		   currentState = state.COMBAT_STATE;
+		    	   }
+		    	   break;	
 		       case PARTY_MENU_STATE:
 		    	   
 		    	   if(partyMenu.stopMenu) {

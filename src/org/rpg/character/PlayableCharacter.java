@@ -11,6 +11,7 @@ import javax.swing.ImageIcon;
 import org.rpg.combat.Abilities;
 import org.rpg.combat.Skill;
 import org.rpg.combat.Spell;
+import org.rpg.map.Tile;
 
 
 public abstract class PlayableCharacter{
@@ -22,8 +23,15 @@ public abstract class PlayableCharacter{
     protected int level;
     protected int XP;
     protected String kit;
-    protected int xpos;
-	protected int ypos;
+    
+    protected int xpos; // pixels
+	protected int ypos;// pixels
+	protected int xposBlocks;
+	protected int yposBlocks;
+	private Boolean canMove;
+	private Boolean isDead;
+	
+	
     protected int HP;
     protected int currentHP;
     protected int MP;
@@ -49,6 +57,8 @@ public abstract class PlayableCharacter{
     	name = "";
     	xpos = 1;
     	ypos = 1;
+    	xposBlocks = 1;
+    	yposBlocks = 1;
     	sprite = createSprite(spriteLoc);
     	level = 1;
     	XP = 0;
@@ -61,12 +71,14 @@ public abstract class PlayableCharacter{
     	defense = 2;
     	spirit = 2;
     	resistence = 2;
-    	speed = 2;
+    	speed = 3;
     	luck = 2;
     	money = 0;
     	spells = new ArrayList<Spell>();
     	skills = new ArrayList<Skill>();
     	usableAbilities = new ArrayList<Abilities>();
+    	canMove = true;
+    	isDead = false;
     }
     
     public PlayableCharacter(String kit, int HP, int MP, int offense, int defense, int spirit, 
@@ -74,6 +86,8 @@ public abstract class PlayableCharacter{
     	name = "";
     	xpos = 1;
     	ypos = 1;
+    	xposBlocks = 1;
+    	yposBlocks = 1;
     	sprite = createSprite(spriteLoc);
     	level = 1;
     	XP = 0;
@@ -92,6 +106,8 @@ public abstract class PlayableCharacter{
       	spells = new ArrayList<Spell>();
     	skills = new ArrayList<Skill>();
     	usableAbilities = new ArrayList<Abilities>();
+    	canMove = true;
+    	isDead = false;
     }
     
     public PlayableCharacter(String kit) {
@@ -101,6 +117,8 @@ public abstract class PlayableCharacter{
     	sprite = createSprite(spriteLoc);
     	level = 1;
     	XP = 0;
+    	xposBlocks = 1;
+    	yposBlocks = 1;
     	this.kit = kit;
     	HP = 30;
     	currentHP = HP;
@@ -110,12 +128,14 @@ public abstract class PlayableCharacter{
     	defense = 2;
     	spirit = 2;
     	resistence = 2;
-    	speed = 2;
+    	speed = 3;
     	luck = 2;
     	money = 0;
     	spells = new ArrayList<Spell>();
     	skills = new ArrayList<Skill>();
     	usableAbilities = new ArrayList<Abilities>();
+    	canMove = true;
+    	isDead = false;
     }
 
     ////////////////////////////////////////////////////////////
@@ -185,6 +205,14 @@ public abstract class PlayableCharacter{
 
     public void setMoney(int money) { this.money = money;  }
     
+	public Boolean isDead() {
+		return isDead;
+	}
+
+	public void setIsDead(Boolean b) {
+		isDead = b;	
+	}
+	
     public BufferedImage createSprite(String spriteLoc) {
     	  try {
     		  BufferedImage sprt = ImageIO.read(new URL(spriteLoc));
@@ -201,6 +229,15 @@ public abstract class PlayableCharacter{
     //////////////////////////////////////////////////////////
     // Spell methods
     ///////////////////////////////////////////
+    
+	// makes sure currentHP cannot go below 0
+	public void takeDamage(int damage) {
+		if(currentHP - damage < 0) {
+			currentHP = 0;
+		} else {
+			currentHP -= damage;
+		}
+	}
 
     public ArrayList<Skill> getSkills() {
 		return skills;
@@ -226,27 +263,56 @@ public abstract class PlayableCharacter{
 
     public void removeSpell(Spell spell) { spells.remove(spell); }
     
+    public void addSkill(Skill skill) { skills.add(skill); }
+    
 
     ///////////////////////////////////////////////////
     // Methods
     ////////////////////////////////////////////
-
     
-    public void incrementXPOS()
-    {
-    	xpos++;
+	public boolean canMove() {
+		return canMove;
+	}
+	
+	public void setCanMove(Boolean tf) {
+		canMove = tf;
+	}
+	
+    public int convertPixelToBlock(int px) {
+    	return px / (Tile.SCREEN_WIDTH / Tile.ROWS);
     }
-    public void decrementXPOS()
-    {
-    	xpos--;
+    
+    public int getXposBlock() {
+    	return xposBlocks;
     }
-    public void incrementYPOS()
-    {
-    	ypos++;
+    
+    public int getYposBlock() {
+    	return yposBlocks;
     }
-    public void decrementYPOS()
+    
+    public void setXposBlock(int xBlock) {
+    	xposBlocks = xBlock;
+    }
+    
+    public void setYposBlock(int yBlock) {
+    	yposBlocks = yBlock;
+    }
+    
+    public void incrementXposBlock()
     {
-    	ypos--;
+    	xposBlocks++;
+    }
+    public void decrementXposBlock()
+    {
+    	xposBlocks--;
+    }
+    public void incrementYposBlock()
+    {
+    	yposBlocks++;
+    }
+    public void decrementYposBlock()
+    {
+    	yposBlocks--;
     }
 
 	public BufferedImage getSprite() {
@@ -281,6 +347,8 @@ public abstract class PlayableCharacter{
 				+ "LUC: " + this.getLuck() + "\n"
 				);
     }
+
+	
 	    
 
 

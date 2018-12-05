@@ -18,12 +18,13 @@ public class Space implements TileIndex{
 	// ...
 	private int spriteIndex;
 	private BufferedImage image;
-	private String grassLoc = "https://i.ibb.co/RCVRtBs/grass.png";
-	private String waterLoc = "https://i.ibb.co/zfj1CMR/water.png";
-	private String rockLoc = "https://i.ibb.co/0BNV9VK/rock.png";
-	private String dirtLoc = "https://i.ibb.co/GPQHmtX/dirt.png";
-	private String pathLoc = "https://i.ibb.co/56L473H/path.png";
-
+	private String grassLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/grass.png";
+	private String waterLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/water.png";
+	private String rockLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/rock.png";
+	private String dirtLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/dirt.png";
+	private String pathLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/path.png";
+	private String treeLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/oak.png";
+	
 	private boolean hasTreasure;
 	private boolean hasNPC;
 	private boolean hasWall;
@@ -66,6 +67,10 @@ public class Space implements TileIndex{
 		case PATH_INDEX: 
 			loadImageFromFile(pathLoc);
 			break;
+		case TREE_INDEX:
+			loadImageFromFile(treeLoc);
+			hasTerrain = true;
+			break;
 		default:
 			// grass
 			loadImageFromFile(grassLoc);
@@ -76,11 +81,26 @@ public class Space implements TileIndex{
 	// takes a fileLocation string and instantiates the private member variable image
     public void loadImageFromFile(String fileLocation) {
     	try {    		
-    		setImage(ImageIO.read(new URL(fileLocation)));
+    		setImage(ImageIO.read(new File(fileLocation)));
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+    }
+    
+    public BufferedImage getImageFromFile(String image) {
+    	String location = "";
+    	switch(image) {
+    	case "tree":
+    		location = treeLoc;
+    		break;
+    	}
+    	try {    		
+    		return ImageIO.read(new File(location));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
     }
     
     public BufferedImage getImage() { return image; }

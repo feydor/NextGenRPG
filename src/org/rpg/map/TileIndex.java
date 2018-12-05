@@ -6,4 +6,5 @@ public interface TileIndex {
     static final int WATER_INDEX = 2;
     static final int DIRT_INDEX = 3;
     static final int PATH_INDEX = 4;
+    static final int TREE_INDEX = 5;
 }

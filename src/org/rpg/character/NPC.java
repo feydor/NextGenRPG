@@ -1,6 +1,8 @@
 package org.rpg.character;
 
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Random;
 
 import org.rpg.item.Item;
@@ -18,11 +20,16 @@ public class NPC extends PlayableCharacter{
 	private String dialogue;
 	private int status;
 	
+	private String enemySpriteLoc = "https://i.ibb.co/b2J2vHH/skeleton.png";
+	private String deadEnemySpriteLoc = "https://i.ibb.co/NVxv27L/bones.png";
+
+	
 	// make default enemy, class = Warrior
 	public NPC() {
 		super();
 		name = "Skeleton";
 		this.type = "Skeleton";
+		sprite = createSprite(enemySpriteLoc);
 		droppableItems = new ArrayList<Item>();
 		droppableXP = 100;
 		droppableMoney = 100;
@@ -34,6 +41,7 @@ public class NPC extends PlayableCharacter{
 	public NPC(String type, String kit) {
 		super(kit);
 		this.type = type;
+		sprite = createSprite(enemySpriteLoc);
 		droppableItems = new ArrayList<Item>();
 		droppableXP = 100;
 		droppableMoney = 100;
@@ -79,6 +87,10 @@ public class NPC extends PlayableCharacter{
 	
 	public int getStatus() { return status; }
 	public void setStatus(int newStatus) { status = newStatus; }
+	
+	public String getDeadEnemySpriteLoc() {
+		return deadEnemySpriteLoc;
+	}
 	
 	//////////////////////////////////////////////////////////////////////////////////////
 	// Methods
@@ -143,5 +155,24 @@ public class NPC extends PlayableCharacter{
 		enemy3.printInfo();		
 		
 	}
+
+
+	public int getNearestPlayer(Party party) {
+		int smallestDistance = 1000; // high number to make sure that first player picked will be set to smallestDistance
+		int closestPlayerIndex = 1;
+		for(Map.Entry<Integer, Player> player : party.getParty().entrySet()) {
+			int sampleDistance = (int) Point2D.distance(player.getValue().getXposBlock(), player.getValue().getYposBlock(),
+					this.getXposBlock(), this.getYposBlock());
+			// checks to see if it found a new smallestDistance,
+			// if so save it and the index of the player
+			if(sampleDistance < smallestDistance && !player.getValue().isDead()) { // ignore dead players
+				smallestDistance = sampleDistance;
+				closestPlayerIndex = player.getKey();
+			}
+		}
+
+		return closestPlayerIndex;
+	}
+
 	
 }

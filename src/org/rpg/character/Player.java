@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.rpg.combat.Skill;
 import org.rpg.item.*;
 
 import java.util.Random; 
@@ -205,5 +206,8 @@ public class Player extends PlayableCharacter implements Serializable{
 		
 	}
 
+
+
+	
 
 }

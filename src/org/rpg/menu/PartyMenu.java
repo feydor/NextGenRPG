@@ -142,9 +142,18 @@ public class PartyMenu {
  			playerClassHPMP.setBackground(windowColor);
  			playerClassHPMP.setForeground(Color.WHITE);
  			playerClassHPMP.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 13));
- 			String classHPMP = " " + party.getParty().get(i+1).getKit() + "\n" + " HP " + party.getParty().get(i+1).getCurrentHP() + 
- 					"/" + party.getParty().get(i+1).getHP() + "\n" + " MP " + party.getParty().get(i+1).getCurrentMP() + 
- 					"/" + party.getParty().get(i+1).getMP();
+ 			
+ 			String classHPMP = "";
+ 			// if player is not dead, show standard information
+ 			if(!party.getParty().get(i+1).isDead()) {
+ 				classHPMP = "HP " + party.getParty().get(i+1).getCurrentHP() + 
+ 	 					"/" + party.getParty().get(i+1).getHP() + "\n" + "MP " + party.getParty().get(i+1).getCurrentMP() + 
+ 	 					"/" + party.getParty().get(i+1).getMP();
+ 			} else {
+ 				// player is dead, show DEAD information
+ 				classHPMP = "DEAD";
+ 			}
+
  			playerClassHPMP.setText("<html>" + classHPMP.replaceAll("<","&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br/>") + "</html>");
  			playerInfo.add(playerClassHPMP);
  			

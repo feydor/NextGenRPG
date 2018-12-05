@@ -45,12 +45,13 @@ public class Tile extends JPanel implements TileIndex{
 	
 		JFrame frame;
 	    // FIXME: need to find a way of changing this url
-		private String sheetLocation = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/tiles/dark.png";
-		private BufferedImage tileSheet; // tileSheet for splitting, laoded from file at sheetLocation
-		private BufferedImage[] tiles; // contains individual tiles after splitting the tileSheet
+		//private String sheetLocation = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/tiles/dark.png";
+		//private BufferedImage tileSheet; // tileSheet for splitting, laoded from file at sheetLocation
+		//private BufferedImage[] tiles; // contains individual tiles after splitting the tileSheet
     	private Space[][] world; // contains the overworld map
     	private Party partyOverWorld;
     	public static Boolean showMenu; // listening to this boolean (StateMachine) will determine if menu pops up
+    	public static boolean startCombat; // determines if combat is initiated
     	
     	private BufferedImage sprite;
     	private int spriteX = 64; // need to be changed to (or made to work with) party Xpos and Ypos
@@ -67,29 +68,29 @@ public class Tile extends JPanel implements TileIndex{
     	 
 		public final int TILE_WIDTH = 32; // e.g. 64x64, 32x32, 16x16, etc
     	public final int TILE_HEIGHT = 32;
-    	private final int WINDOW_HEIGHT = 1000;
-    	private final int WINDOW_WIDTH = 1300;
+    	//private final int WINDOW_HEIGHT = 1000;
+    	//private final int WINDOW_WIDTH = 1300;
     	
 		// e.g. for a tilesheet of 1000x1300 (HxW), 
 		// rows = 1000 / TILE_HEIGHT(32) = 31.25 => 31
 		// cols = 1300 / TILE_WIDTH(32) = 40.625 => 40
 		// NOTE: tilesheet resolution is only for example
-    	final int rows = 20;
-    	final int cols = 20;
+    	//final int rows = 26;
+    	//final int cols = 30;
     	
-        protected final int ROWS = 40; // number of tiles per row
-    	protected final int COLS = 40; // number of tiles per columns
+        public final static int ROWS = 32; // number of tiles per row
+    	public final static int COLS = 32; // number of tiles per columns
     	
     	public static final int TIMER_DELAY = 10;
 	    public static final int DELTA_X = 2; // speed = 3
 	    public static final int DELTA_Y = DELTA_X;
 	    public static final int SPRITE_WIDTH = 32; // Same as TILE_WIDTH/HEIGHT
 	    public static final int SPRITE_HEIGHT = SPRITE_WIDTH;
-	    private static final String PRESSED = "pressed";
-	    private static final String RELEASED = "released";
+	    public static final String PRESSED = "pressed";
+	    public static final String RELEASED = "released";
 	    
-	    protected static final int SCREEN_WIDTH = 1280; // px
-	    protected static final int SCREEN_HEIGHT = 1024;
+	    public static final int SCREEN_WIDTH = 1024; // px
+	    public static final int SCREEN_HEIGHT = 1024;
     	
     public Tile(Party party) {
     	frame = new JFrame();
@@ -99,15 +100,15 @@ public class Tile extends JPanel implements TileIndex{
 		instantiateWorldArray();
 		
     	// done to ensure the tileSheet is read only once
-    	if(tileSheet == null) {
-    		try {
-				tileSheet = ImageIO.read(new File(sheetLocation)); // load tile sheet from file
-				tiles = new BufferedImage[rows * cols];
-				getTilesFromSheet(); //split tileSheet into tiles[]
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-    	}
+//    	if(tileSheet == null) {
+//    		try {
+//				tileSheet = ImageIO.read(new File(sheetLocation)); // load tile sheet from file
+//				tiles = new BufferedImage[rows * cols];
+//				getTilesFromSheet(); //split tileSheet into tiles[]
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+//    	}
     	//set up keybinding
 		for (Dir dir : Dir.values()) {
 			dirMap.put(dir, Boolean.FALSE);
@@ -116,33 +117,28 @@ public class Tile extends JPanel implements TileIndex{
 		setKeyBindings();
 		animationTimer.start();
 
-		setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
+		setPreferredSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
 		showMenu = false;
+		startCombat = false;
 		this.setFocusable(true);
 		this.addKeyListener(menuEnter);
-		
-	
-        
-		
     }
-    
-    public Tile() {} // needed for Combat extension of Tile
     
     // NOTE: Not used right now. Instead each image is manually loaded from file in Space class.
-    public void getTilesFromSheet() {
-    	// FIXME: Fix proper spritesheet splitting, currently loading images manually
-    	// goes through the sheet and adds ROWSxCOLS blocks to sprites 2d array.
-    	for (int i = 0; i < rows; i++) {
-    	    for (int j = 0; j < cols; j++) {
-    	    	tiles[(i * cols) + j] = tileSheet.getSubimage(
-    	            j * TILE_WIDTH,
-    	            i * TILE_HEIGHT,
-    	            TILE_WIDTH,
-    	            TILE_HEIGHT
-    	        );
-    	    }
-    	}
-    }
+//    public void getTilesFromSheet() {
+//    	// FIXME: Fix proper spritesheet splitting, currently loading images manually
+//    	// goes through the sheet and adds ROWSxCOLS blocks to sprites 2d array.
+//    	for (int i = 0; i < rows; i++) {
+//    	    for (int j = 0; j < cols; j++) {
+//    	    	tiles[(i * cols) + j] = tileSheet.getSubimage(
+//    	            j * TILE_WIDTH,
+//    	            i * TILE_HEIGHT,
+//    	            TILE_WIDTH,
+//    	            TILE_HEIGHT
+//    	        );
+//    	    }
+//    	}
+//    }
     
     // overworld map is made here
 	// FIXME: FInd a way to load a map from file (csv or xcf?)
@@ -163,7 +159,7 @@ public class Tile extends JPanel implements TileIndex{
     	    			i == 1 || i == ROWS-2 || j == 1 || j == COLS-2) {
     	    		world[i][j] = new Space(ROCK_INDEX);
     	    	}
-				
+
 				// a pond of water
 //				if( ((i > 5) & (i < 10)) && ((j > 8) & (j < 16)) ) {
 //    	    		world[i][j] = new Space(WATER_INDEX);
@@ -192,8 +188,7 @@ public class Tile extends JPanel implements TileIndex{
     	for (int i = 0; i < ROWS; i++) {
     	    for (int j = 0; j < COLS; j++) {
 
-    	    	g.drawImage(world[i][j].getImage(), i*TILE_WIDTH, j*TILE_HEIGHT, null);
-    	    	
+    	    	g.drawImage(world[i][j].getImage(), i*TILE_WIDTH, j*TILE_HEIGHT, null);	
                 //NOTE: draw optional borders here
                 //g.setColor(Color.DARK_GRAY);
                 //g.drawRect(i * TILE_WIDTH, j * TILE_HEIGHT, TILE_WIDTH ,TILE_HEIGHT);
@@ -201,7 +196,13 @@ public class Tile extends JPanel implements TileIndex{
     	}	
     	
     	// layer 2 - objects, foilage, terrain
-        // ...
+    	// tree
+
+    	g.drawImage(world[3][2].getImageFromFile("tree"), 2*TILE_WIDTH, 3*TILE_HEIGHT, null);
+    	g.drawImage(world[5][2].getImageFromFile("tree"), 2*TILE_WIDTH, 5*TILE_HEIGHT, null);
+    	g.drawImage(world[7][2].getImageFromFile("tree"), 2*TILE_WIDTH, 7*TILE_HEIGHT, null);
+
+        
 
     	//layer 3 - sprites
     	  if (sprite != null) {
@@ -264,18 +265,21 @@ public class Tile extends JPanel implements TileIndex{
            }
            if(spriteX != newX || spriteY != newY) {
         	   // Random Encounters here
-        
+        	   
+        	   int distanceFromWalls = 5;
+        	   
+        	   // Random Encounters are based on % chance, the party being in combat already, 
+        	   // and not being distanceFromWalls away from any walls (this is to make sure Combat doesn't break when placing enemies)
         	   if (Math.random() < 0.01 && !partyOverWorld.isInCombat() 
-        			   && spriteX > 4 * TILE_WIDTH && spriteY > 4 * TILE_HEIGHT) {
+        			   && spriteX > distanceFromWalls * TILE_WIDTH && spriteY > distanceFromWalls * TILE_HEIGHT
+        			   && spriteX < (COLS - distanceFromWalls) * TILE_WIDTH && spriteY < (ROWS - distanceFromWalls) * TILE_HEIGHT) {
            	    System.out.println("Prepare to fight!");
-   				Combat combat;
-   				
+
    				partyOverWorld.setPartyXpos(spriteX);
    				partyOverWorld.setPartyYpos(spriteY);
-				combat = new Combat();
-				combat.update(partyOverWorld, world);
 				partyOverWorld.setInCombat(true);
-   				
+				
+				startCombat = true; // switch to COMBAT_STATE
    				//turn off music
    				
    			}
@@ -294,7 +298,7 @@ public class Tile extends JPanel implements TileIndex{
     		// divide pixels into ROWS and COLS, NOTE: Any decimal is cut off so 3.84 -> 3
     		// forces player to be in neat 32x32 boxes for boundary checking purposes
     		int xpos = xposPx / (SCREEN_WIDTH / COLS); // xposPX / 32
-    		int ypos = yposPx / (SCREEN_HEIGHT / ROWS); 
+    		int ypos = yposPx / (SCREEN_HEIGHT / ROWS); // yposPx / 
     		
     		if(world[ypos][xpos].hasWall()) { isValid = false; }
     		
@@ -368,6 +372,7 @@ public class Tile extends JPanel implements TileIndex{
            }
         }
      };
+	
      
      //////////////////////////////////////////////////////////////////////
      // Getters and Setters
@@ -385,6 +390,10 @@ public class Tile extends JPanel implements TileIndex{
      public BufferedImage getSprite() {
     	 return sprite;
      }
+     
+     public Space[][] getWorldMap() {
+ 		return world;
+ 	}
     
     public static void main(String avg[]) throws IOException {
     	Player p1 = new Player("Warrior");
@@ -403,6 +412,8 @@ public class Tile extends JPanel implements TileIndex{
             }
          });
 	}
+
+	
 
 	
 }

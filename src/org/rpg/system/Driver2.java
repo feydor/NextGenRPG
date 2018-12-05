@@ -18,23 +18,15 @@ public class Driver2 {
 		Tile worldFrame = new Tile(party);
 		CustomizationMenu customizationMenu = null;
 		PartyMenu partyMenu = new PartyMenu(party);
+		Combat combat = new Combat();
 		
 
 		boolean isRunning = true;
 		while(isRunning) {
-			stateMachine.Update(titleScreen, worldFrame, customizationMenu, partyMenu, party);
+			stateMachine.Update(titleScreen, worldFrame, customizationMenu, partyMenu, party, combat);
 		        //render();
 		     Thread.sleep(10); //the timing mechanism
 		}
-
-
-//        SwingUtilities.invokeLater(new Runnable() {
-//        	
-//        	public void run() {
-//            	//worldFrame.updateFrame();
-//            	stateMachine.Update();
-//            }
-//         });
 		
 	}
 }

@@ -40,19 +40,19 @@ public class ButtonPane extends JPanel {
                @Override
                public void keyPressed(KeyEvent e) {
                   switch (e.getKeyCode()) {
-                  case KeyEvent.VK_UP:
+                  case KeyEvent.VK_W:
                      if (curRow > 0)
                     	 buttonsGrid[curRow - 1][curCol].requestFocus();
                      break;
-                  case KeyEvent.VK_DOWN:
+                  case KeyEvent.VK_S:
                      if (curRow < buttonsGrid.length - 1)
                     	 buttonsGrid[curRow + 1][curCol].requestFocus();
                      break;
-                  case KeyEvent.VK_LEFT:
+                  case KeyEvent.VK_A:
                      if (curCol > 0)
                     	 buttonsGrid[curRow][curCol - 1].requestFocus();
                      break;
-                  case KeyEvent.VK_RIGHT:
+                  case KeyEvent.VK_D:
                      if (curCol < buttonsGrid[curRow].length - 1)
                     	 buttonsGrid[curRow][curCol + 1].requestFocus();
                      break;
@@ -120,11 +120,11 @@ private void createNumPlayersButtons(Color fgColor) {
                @Override
                public void keyPressed(KeyEvent e) {
                   switch (e.getKeyCode()) {
-                  case KeyEvent.VK_UP:
+                  case KeyEvent.VK_W:
                       if (curRow > 0)
                     	  buttons[curRow - 1].requestFocus();
                       break;
-                   case KeyEvent.VK_DOWN:
+                   case KeyEvent.VK_S:
                       if (curRow < buttons.length - 1)
                     	  buttons[curRow + 1].requestFocus();
                       break;
@@ -157,11 +157,11 @@ private void createNumPlayersButtons(Color fgColor) {
                @Override
                public void keyPressed(KeyEvent e) {
                   switch (e.getKeyCode()) {
-                  case KeyEvent.VK_UP:
+                  case KeyEvent.VK_W:
                       if (curRow > 0)
                     	  buttons[curRow - 1].requestFocus();
                       break;
-                   case KeyEvent.VK_DOWN:
+                   case KeyEvent.VK_S:
                       if (curRow < buttons.length - 1)
                     	  buttons[curRow + 1].requestFocus();
                       break;
@@ -196,11 +196,11 @@ private void createNumPlayersButtons(Color fgColor) {
                @Override
                public void keyPressed(KeyEvent e) {
                   switch (e.getKeyCode()) {
-                  case KeyEvent.VK_UP:
+                  case KeyEvent.VK_W:
                       if (curRow > 0)
                     	  buttons[curRow - 1].requestFocus();
                       break;
-                   case KeyEvent.VK_DOWN:
+                   case KeyEvent.VK_S:
                       if (curRow < buttons.length - 1)
                     	  buttons[curRow + 1].requestFocus();
                       break;
@@ -232,11 +232,11 @@ private void createNumPlayersButtons(Color fgColor) {
                @Override
                public void keyPressed(KeyEvent e) {
                   switch (e.getKeyCode()) {
-                  case KeyEvent.VK_UP:
+                  case KeyEvent.VK_W:
                       if (curRow > 0)
                     	  buttons[curRow - 1].requestFocus();
                       break;
-                   case KeyEvent.VK_DOWN:
+                   case KeyEvent.VK_D:
                       if (curRow < buttons.length - 1)
                     	  buttons[curRow + 1].requestFocus();
                       break;
@@ -250,11 +250,12 @@ private void createNumPlayersButtons(Color fgColor) {
 	}
 	
 	private void createCombatButtons(Color fgColor) {
-		buttons = new JButton[4];
-		buttons[0] = new JButton("FIGHT");
-	    buttons[1] = new JButton("ABILITIES");
-	    buttons[2] = new JButton("FLEE");
-	    buttons[3] = new JButton("SKIP TURN");
+		buttons = new JButton[5];
+		buttons[0] = new JButton("MOVE");
+	    buttons[1] = new JButton("FIGHT");
+	    buttons[2] = new JButton("ABILITIES");
+	    buttons[3] = new JButton("FLEE");
+	    buttons[4] = new JButton("END TURN");
 
 	    for (int i = 0; i < buttons.length; i++) {
             final int curRow = i;
@@ -264,23 +265,23 @@ private void createNumPlayersButtons(Color fgColor) {
             buttons[i].setBorder(new LineBorder(Color.WHITE));
             buttons[i].setFont(new Font("Monaco", Font.TRUETYPE_FONT, 14));
             buttons[i].addKeyListener(enter);
-            buttons[i].addKeyListener(new KeyAdapter() {
-               @Override
-               public void keyPressed(KeyEvent e) {
-                  switch (e.getKeyCode()) {
-                  case KeyEvent.VK_UP:
-                      if (curRow > 0)
-                    	  buttons[curRow - 1].requestFocus();
-                      break;
-                   case KeyEvent.VK_DOWN:
-                      if (curRow < buttons.length - 1)
-                    	  buttons[curRow + 1].requestFocus();
-                      break;
-                  default:
-                     break;
-                  }
-               }
-            });
+//            buttons[i].addKeyListener(new KeyAdapter() {
+//               @Override
+//               public void keyPressed(KeyEvent e) {
+//                  switch (e.getKeyCode()) {
+//                  case KeyEvent.VK_W:
+//                      if (curRow > 0)
+//                    	  buttons[curRow - 1].requestFocus();
+//                      break;
+//                   case KeyEvent.VK_S:
+//                      if (curRow < buttons.length - 1)
+//                    	  buttons[curRow + 1].requestFocus();
+//                      break;
+//                  default:
+//                     break;
+//                  }
+//               }
+//            });
             add(buttons[i]);
 	      }
 		

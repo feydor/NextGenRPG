@@ -8,10 +8,15 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -20,48 +25,103 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.InputMap;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 import javax.swing.border.LineBorder;
 
 import org.rpg.character.*;
 import org.rpg.map.*;
 import org.rpg.menu.ButtonPane;
 import org.rpg.system.AudioPlayer;
+import org.rpg.system.Dir;
 import org.rpg.system.KeyBinding;
 
-public class Combat extends Tile{
+public class Combat extends JPanel{
 	private JFrame combatScreen;
     private JPanel combatPanel; 
     private JPanel mapPanel; // will be handled by private inner class MapScreen
-	//private String bgMusic = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/music/firstCampaign.wav";
-	private String bgMusic = "https://s3-us-west-1.amazonaws.com/nextgenrpgassets/firstCampaign.wav";
+    private JLabel healthLabel;
+    private JLabel enemyNameLabel;
+	private String bgMusic = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/music/firstCampaign.wav";
+	//private String bgMusic = "https://s3-us-west-1.amazonaws.com/nextgenrpgassets/firstCampaign.wav";
     private Color windowColor;
 	private Color bgColor;
 	private ButtonPane combatPane;
 	private AudioPlayer fightMusic;
+	private Graphics mapGraphics;
 	
 	private Party party;
 	private Space[][] world;
+	private int currentMoves; // Determines how many moves a player has made so far, for their turn
+	private final int enemyTurn = 5; // on currentPlayerTurn == 5, move ai
+	
+	protected static final int SCREEN_WIDTH = 1024; // px
+    protected static final int SCREEN_HEIGHT = 1024;
+    protected final int ROWS = 32; // number of tiles per row
+	protected final int COLS = 32; // number of tiles per columns
+	public static final int SPRITE_WIDTH = 32; // Same as TILE_WIDTH/HEIGHT
+    public static final int SPRITE_HEIGHT = SPRITE_WIDTH;
+	public final int TILE_WIDTH = 32; // e.g. 64x64, 32x32, 16x16, etc
+	public final int TILE_HEIGHT = 32;
 	
 	private int newxpos = 0;
 	private int newypos = 0;
 	
 	private int distPlayers = 4; //closeness of party to their center [friendly and enemy]
 	private int distEnemies = 8; //how far apart friendly and enemies centers are
-	
+	public static boolean endCombat;
 	
 	public Combat() 
 	{
-		combatScreen = new JFrame();
 		windowColor = new Color(18, 1, 113);
 		bgColor = new Color(0, 0, 0);
+		currentMoves = 0;
+
+		endCombat = false;
 	}
 	
+	// the main setup function
+	public void update(Party partyOverWorld, Space[][] worldTile) {
+		setPartyCombat(partyOverWorld);
+	   	party.getParty().get(1).setXpos(party.getPartyXpos()); // instantiate p1 position to be at party position
+    	party.getParty().get(1).setYpos(party.getPartyYpos());
+		setWorldGrid(worldTile);
+    	
+    	instantiateCombat(party, party.getPartyXpos(), party.getPartyYpos());	
+    	
+    	combatScreen = new JFrame();
+    	combatScreen.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+    	combatScreen.setTitle("Battle");
+    	combatScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    	buildCombatPanel();
+    	combatScreen.add(combatPanel);
+    	combatScreen.setVisible(true);	
+    	try {
+			fightMusic = new AudioPlayer(bgMusic); // NOTE: remove NET to stream from local file at bgMusic
+			fightMusic.play();								// also uncomment bgMusic above
+		} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+			e.printStackTrace();
+		}
+    	
+	}
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Paint functions
+	/////////////////////////////////////////////////////////////
 	public void buildCombatPanel() {
 		combatPanel = new JPanel(new GridBagLayout());
 		combatPanel.setBackground(bgColor);
@@ -69,7 +129,6 @@ public class Combat extends Tile{
 		// combatPanel will contain two panels (1) The map screen and (2) command screen 
 		mapPanel = new MapPanel();
 		mapPanel.setBackground(bgColor);
-		//mapPanel.paint(Graphics graphics); // TODO: somehow need to paint the map screen here
 		
 		// consists of 3 components (1) the commandPanel, (2) the healthLabel, and (3) the enemyNameLabel
 		JPanel commandPanel = new JPanel(new GridBagLayout());
@@ -79,13 +138,13 @@ public class Combat extends Tile{
 		commandPanel.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 14));
 		
 		// build combat buttons
-		combatPane = new ButtonPane("combat", windowColor, 4);
+		combatPane = new ButtonPane("combat", windowColor, 5);
 		for(JButton button : combatPane.getNumberButtons()) {
 			button.addActionListener(new CombatListener()); // private inner class below
 		}
 		
 		// build info label
-		JLabel healthLabel = new JLabel("", SwingConstants.CENTER);
+		healthLabel = new JLabel("", SwingConstants.CENTER);
 		healthLabel.setBackground(windowColor);
 		healthLabel.setOpaque(true);
 		healthLabel.setForeground(Color.WHITE);	
@@ -96,13 +155,21 @@ public class Combat extends Tile{
 		
 		String healthLabelString = "";
 		for(Map.Entry<Integer, Player> player : party.getParty().entrySet()) {
-			healthLabelString += player.getValue().getName() + "          " + player.getValue().getCurrentHP() + 
-					"/" + player.getValue().getHP() + "     " + player.getValue().getCurrentMP() + "\n";
+			if(player.getKey() == party.getCurrentPlayerTurn()) { // highlight currentPlayerTurn, starts with player 1
+				healthLabelString += "---> ";
+			} 
+			if(!player.getValue().isDead()) { // normal player info
+				healthLabelString += player.getValue().getName() + "          HP: " + player.getValue().getCurrentHP() + 
+						"/" + player.getValue().getHP() + "     MP: " + player.getValue().getCurrentMP() + "\n";
+			} else { // display DEAD status
+				healthLabelString += player.getValue().getName() + " - DEAD" + "\n";
+			}
+			
 		}
 		healthLabel.setText("<html>" + healthLabelString.replaceAll("<","&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br/>") + "</html>");
 		
 		// build enemyNameLabel
-		JLabel enemyNameLabel = new JLabel("", SwingConstants.CENTER);
+		enemyNameLabel = new JLabel("", SwingConstants.CENTER);
 		enemyNameLabel.setBackground(windowColor);
 		enemyNameLabel.setOpaque(true);
 		enemyNameLabel.setForeground(Color.WHITE);	
@@ -113,11 +180,11 @@ public class Combat extends Tile{
 		String enemyNames = "";
 		
 		// for each enemy in enemies attribute of Party, add anme to enemyNameLabel
-		// IMPORTANT: enemies arraylist must be instantiated prior to update();
-//		for(PlayableCharacter enemy : party.getEnemies()) {
-//			enemyNames += enemy.getName() + "\n";
-//		}
-//		enemyNameLabel.setText("<html>" + enemyNames.replaceAll("<","&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br/>") + "</html>");
+		//IMPORTANT: enemies arraylist must be instantiated prior to update();
+		for(PlayableCharacter enemy : party.getEnemies()) {
+			enemyNames += enemy.getName() + "     HP: " + enemy.getCurrentHP() + "/" + enemy.getHP() +"\n";
+		}
+		enemyNameLabel.setText("<html>" + enemyNames.replaceAll("<","&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br/>") + "</html>");
 		
 		// now put all components together, first build up commandPanel
 		GridBagConstraints enemyNamesCons = new GridBagConstraints();
@@ -162,44 +229,59 @@ public class Combat extends Tile{
 		combatPanel.add(commandPanel, commandPanelCons);
 	}
 	
-	
-	// the main setup function
-	public void update(Party partyOverWorld, Space[][] worldTile) {
-		setPartyCombat(partyOverWorld);
-		setWorldGrid(worldTile);
-    	KeyBinding mainPanel = new KeyBinding(); 
-    	combatScreen.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-    	combatScreen.setTitle("Battle");
-    	combatScreen.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    	//combatScreen.setContentPane(new Tile(partyOverWorld));
-    	
-    	instantiateCombat(party, party.getPartyXpos(), party.getPartyYpos());
-    	
-    	buildCombatPanel();
-    	combatScreen.add(combatPanel);
-    	combatScreen.setVisible(true);	
-		try {
-			fightMusic = new AudioPlayer(bgMusic, "NET"); // NOTE: remove NET to stream from local file at bgMusic
-			fightMusic.play();								// also uncomment bgMusic above
-		} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-			e.printStackTrace();
+	// call after damage calculations to update Player health label
+	public void updateHealthLabel() {
+		String healthLabelString = "";
+		for(Map.Entry<Integer, Player> player : party.getParty().entrySet()) {
+			if(player.getKey() == party.getCurrentPlayerTurn()) { // highlight currentPlayerTurn, starts with player 1
+				healthLabelString += "---> ";
+			} 
+			if(!player.getValue().isDead()) { // normal player info
+				healthLabelString += player.getValue().getName() + "          HP: " + player.getValue().getCurrentHP() + 
+						"/" + player.getValue().getHP() + "     MP: " + player.getValue().getCurrentMP() + "\n";
+			} else { // display DEAD status
+				healthLabelString += player.getValue().getName() + " - DEAD" + "\n";
+			}
+			
 		}
+		healthLabel.setText("<html>" + healthLabelString.replaceAll("<","&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br/>") + "</html>");
+	}
+	
+	public void updateEnemyLabel() {
+		String enemyNames = "";
 		
-		
+		// for each enemy in enemies attribute of Party, add anme to enemyNameLabel
+		//IMPORTANT: enemies arraylist must be instantiated prior to update();
+		for(PlayableCharacter enemy : party.getEnemies()) {
+			enemyNames += enemy.getName() + "     HP: " + enemy.getCurrentHP() + "/" + enemy.getHP() +"\n";
+		}
+		enemyNameLabel.setText("<html>" + enemyNames.replaceAll("<","&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br/>") + "</html>");
 		
 	}
 	
-
-	public static void damageAmt(PlayableCharacter chr, int amt)
-	{
-		chr.setCurrentHP(chr.getCurrentHP() - 2);
+	 @Override
+	 public void paintComponent(Graphics g) {
+		 super.paintComponent(g);
+	 }
+	
+	// paints the above mapPanel, but with the range of the specified player shown in blue
+	public void showPlayerRange(Player player) {
+		mapGraphics = mapPanel.getGraphics();
+		mapGraphics.setColor(Color.BLUE);
+		mapGraphics.drawOval(64, 64, distEnemies, distEnemies);
+		mapPanel.revalidate();
+		mapPanel.repaint();
 	}
+	
+	///////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Combat functions
+	///////////////////////////////////////////////////////////////////
 	
 	 // assumes that xpos and ypos are in block units, not pixel units
 	 private boolean isValidMove(int xpos, int ypos) {
  		boolean isValid = true;
-
- 		if (xpos < 0 || ypos < 0) { isValid = false; }
+ 		
+ 		if (xpos < 0 || ypos < 0) { return false; } // if negative values, return false immediately
  		
  		if(world[ypos][xpos].hasWall()) { isValid = false; }
  		
@@ -217,256 +299,570 @@ public class Combat extends Tile{
  		
  		return isValid;
  	}
-	
-	
-	/*public void updateMapforCombat(Party party, Entry<Integer, Player> entry2, Space grid[][], int xpos, int ypos)
-	{
-		for(int i = 0; i < ROWS; i++) {          
-		    for(int j = 0; j < COLS; j++) {
-		        grid[i][j] = new Space(FIELD_CHAR);
-		        
-		        // make walls
-		        if(i == 0 || i == maxHeight || j == 0 || j == maxWidth) {
-		        	grid[i][j] = new Space(WALLS_CHAR);
-		        }
-		        
-		        // test NPC
-		        grid[8][8] = new Space(NPC_CHAR);
-		        
-		        // test Terrain
-		        grid[2][8] = new Space(TERRAIN_CHAR);
-		        grid[3][8] = new Space(TERRAIN_CHAR);
-		        grid[3][9] = new Space(TERRAIN_CHAR);
-		        grid[3][7] = new Space(TERRAIN_CHAR);
-		        grid[4][8] = new Space(TERRAIN_CHAR);
 
-		        grid[maxHeight - 1][maxWidth - 1] = new Space(ITEM_CHAR);
-		        for(Map.Entry<Integer, Player> entry : party.getParty().entrySet())
-		        {	
-		        	grid[entry.getValue().getYpos()][entry.getValue().getXpos()] = new Space(entry.getKey());
-		        }
-		        for(int z = 0; z < party.getEnemies().size(); z++)
-		        {
-		        	if (party.getEnemies().get(z).getCurrentHP() > 0)
-		        	{
-		        		grid[party.getEnemies().get(z).getYpos()][party.getEnemies().get(z).getXpos()] = new Space(party.getEnemies().get(z).getSSprite());
-		        	}
-		        }
-		        
-		        if (!grid[i][j].hasPlayer())
-		        {
-		        	System.out.print(PIXEL_DIST + grid[i][j].getSprite());
-		        }
-		        else
-		        {
-		        	System.out.print(PIXEL_DIST + grid[i][j].getSSprite());
-		        }
-		    }
-		    System.out.print("\n" + MARGINS);         
-		}
-		*/
 	// instantiates player positions and converts from pixel units to block units
 	public void instantiateCombat(Party party, int xposPx, int yposPx)
 	{
 		// divide pixels into ROWS and COLS, NOTE: Any decimal is cut off so 3.84 -> 3
- 		// forces player to be in neat 32x32 boxes for boundary checking purposes
- 		int xpos = xposPx / (SCREEN_WIDTH / COLS); // xposPX / 32
- 		int ypos = yposPx / (SCREEN_HEIGHT / ROWS); 
- 		
- 		System.out.println("xpos = " + xpos);
- 		System.out.println("ypos = " + ypos);
+	 	// forces player to be in neat 32x32 boxes for boundary checking purposes
+		int xBlocks = party.getParty().get(1).getXpos() / (SCREEN_WIDTH / COLS);
+		int yBlocks = party.getParty().get(1).getYpos() / (SCREEN_HEIGHT / ROWS);
+		party.getParty().get(1).setXposBlock(xBlocks);
+		party.getParty().get(1).setYposBlock(yBlocks);
 		
-		for(Map.Entry<Integer, Player> entry : party.getParty().entrySet()) //initialize location of party members
-		{	
-			newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers);
-			newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers);
+		// initialize location of party members
+ 		for(Map.Entry<Integer, Player> player : party.getParty().entrySet()) {
+ 		
+ 			xBlocks = player.getValue().getXpos() / (SCREEN_WIDTH / COLS);
+			yBlocks = player.getValue().getYpos() / (SCREEN_HEIGHT / ROWS);
 			
-			while (!isValidMove(newxpos, newypos))
-			{
-				newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers);
-				newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers);
+			// set other party member positions
+			if(player.getKey() == 2) { // p2
+				xBlocks = party.getParty().get(1).getXposBlock() + 1;
+				yBlocks = party.getParty().get(1).getYposBlock() + 1;
+			} else if(player.getKey() == 3) { // p3
+				xBlocks = party.getParty().get(1).getXposBlock() - 2;
+				yBlocks = party.getParty().get(1).getYposBlock() + 1;	
+			} else if(player.getKey() == 4) { // p4
+				xBlocks = party.getParty().get(1).getXposBlock() + 2;
+				yBlocks = party.getParty().get(1).getYposBlock() - 1;	
 			}
 			
-			entry.getValue().setXpos(newxpos);
-			entry.getValue().setYpos(newypos);
-			world[newypos][newxpos].setHasPlayer(true);
+			int xPixels = 64;
+			int yPixels = 64;
+			if(isValidMove(xBlocks, yBlocks)) {
+				xPixels = xBlocks * (SCREEN_WIDTH / COLS); 
+				yPixels = yBlocks * (SCREEN_HEIGHT / ROWS);
+			} else if(isValidMove(xBlocks + distPlayers, yBlocks)){
+				xPixels = (xBlocks + distPlayers) * (SCREEN_WIDTH / COLS); 
+				yPixels = yBlocks * (SCREEN_HEIGHT / ROWS);
+			} else if(isValidMove(xBlocks, yBlocks + distPlayers)) {
+				xPixels = xBlocks * (SCREEN_WIDTH / COLS); 
+				yPixels = (yBlocks + distPlayers) * (SCREEN_HEIGHT / ROWS);
+			} else if(isValidMove(xBlocks - distPlayers, yBlocks)){
+				xPixels = (xBlocks - distPlayers) * (SCREEN_WIDTH / COLS); 
+				yPixels = yBlocks * (SCREEN_HEIGHT / ROWS);
+			} else if(isValidMove(xBlocks, yBlocks - distPlayers)){
+				xPixels = xBlocks * (SCREEN_WIDTH / COLS); 
+				yPixels = (yBlocks - distPlayers) * (SCREEN_HEIGHT / ROWS);
+			} else if(isValidMove(xBlocks + distPlayers, yBlocks + distPlayers)){
+				xPixels = (xBlocks + distPlayers) * (SCREEN_WIDTH / COLS); 
+				yPixels = (yBlocks + distPlayers) * (SCREEN_HEIGHT / ROWS);
+			}
+			// set both pixel and block positions for each player
+			player.getValue().setXpos(xPixels);
+			player.getValue().setYpos(yPixels);
+			player.getValue().setXposBlock(xPixels / (SCREEN_WIDTH / COLS)); // make sure these are correct
+			player.getValue().setYposBlock(yPixels / (SCREEN_HEIGHT / ROWS));
 			
-		}
+			// only setHasPlayer if the player is not dead
+			if(!player.getValue().isDead()) {
+				// set hasPlayer boolean to each player's spot, must update upon moving
+				world[player.getValue().getYposBlock()][player.getValue().getXposBlock()].setHasPlayer(true);
+			} else { // FIXME: Not sure if here, but apparently dead players are still taking up space and preventing others
+				// from moving on their tiles
+				world[player.getValue().getYposBlock()][player.getValue().getXposBlock()].setHasPlayer(false);
+			}
+	
+ 		}
 		
 		//int numEnemies = (int)(Math.random() * party.getParty().size() + 1);
 		
+ 		// reset xBlocks and yBlocks variables to be equal to P1 xBlocks and yBlocks
+ 		xBlocks = party.getParty().get(1).getXposBlock();
+		yBlocks = party.getParty().get(1).getYposBlock();
 		for (int i = 0; i < 3; i++) //initialize location of enemies
 		{
 			NPC enemy = new NPC();
 			
-			if (isValidMove(xpos + distEnemies, ypos))
+			if (isValidMove(xBlocks + distEnemies, yBlocks))
 			{
-				newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers + distEnemies);
-				newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers);
+				newxpos = (int)(Math.random() * distPlayers*2) + (xBlocks - distPlayers + distEnemies);
+				newypos = (int)(Math.random() * distPlayers*2) + (yBlocks - distPlayers);
 				while (!isValidMove(newxpos, newypos))
 				{
-					newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers + distEnemies);
-					newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers);
+					newxpos = (int)(Math.random() * distPlayers*2) + (xBlocks - distPlayers + distEnemies);
+					newypos = (int)(Math.random() * distPlayers*2) + (yBlocks - distPlayers);
 				}
 			}
-			else if(isValidMove(xpos - distEnemies, ypos))
+			else if(isValidMove(xBlocks - distEnemies, yBlocks))
 			{
-				newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers - distEnemies);
-				newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers);
+				newxpos = (int)(Math.random() * distPlayers*2) + (xBlocks - distPlayers - distEnemies);
+				newypos = (int)(Math.random() * distPlayers*2) + (yBlocks - distPlayers);
 				while (!isValidMove(newxpos, newypos))
 				{
-					newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers - distEnemies);
-					newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers);
+					newxpos = (int)(Math.random() * distPlayers*2) + (xBlocks - distPlayers - distEnemies);
+					newypos = (int)(Math.random() * distPlayers*2) + (yBlocks - distPlayers);
 				}
 			}
-			else if(isValidMove(xpos, ypos + distEnemies))
+			else if(isValidMove(xBlocks, yBlocks + distEnemies))
 			{
-				newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers);
-				newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers + distEnemies);
+				newxpos = (int)(Math.random() * distPlayers*2) + (xBlocks - distPlayers);
+				newypos = (int)(Math.random() * distPlayers*2) + (yBlocks - distPlayers + distEnemies);
 				while (!isValidMove(newxpos, newypos))
 				{
-					newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers);
-					newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers + distEnemies);
+					newxpos = (int)(Math.random() * distPlayers*2) + (xBlocks - distPlayers);
+					newypos = (int)(Math.random() * distPlayers*2) + (yBlocks - distPlayers + distEnemies);
 				}
 			}
-			else if(isValidMove(xpos, ypos - distEnemies))
+			else if(isValidMove(xBlocks, yBlocks - distEnemies))
 			{
-				newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers);
-				newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers - distEnemies);
+				newxpos = (int)(Math.random() * distPlayers*2) + (xBlocks - distPlayers);
+				newypos = (int)(Math.random() * distPlayers*2) + (yBlocks - distPlayers - distEnemies);
 				while (!isValidMove(newxpos, newypos))
 				{
-					newxpos = (int)(Math.random() * distPlayers*2) + (xpos - distPlayers);
-					newypos = (int)(Math.random() * distPlayers*2) + (ypos - distPlayers - distEnemies);
+					newxpos = (int)(Math.random() * distPlayers*2) + (xBlocks - distPlayers);
+					newypos = (int)(Math.random() * distPlayers*2) + (yBlocks - distPlayers - distEnemies);
 				}
 			}
-			enemy.setXpos(newxpos);
-			enemy.setYpos(newypos);
+			// set both pixel and block positions for enemies
+			// NOTE: newxpos is the block unit
+			enemy.setXpos(newxpos * (SCREEN_WIDTH / COLS));
+			enemy.setXposBlock(newxpos);
+			enemy.setYpos(newypos * (SCREEN_HEIGHT / ROWS));
+			enemy.setYposBlock(newypos);
 			party.addtoEnemies(enemy);
 			world[newypos][newxpos].setHasPlayer(true);
 			
-			System.out.println("enemy.getXpos() = " + enemy.getXpos());
-			System.out.println("enemy.getYpos() = " + enemy.getYpos());
-			System.out.println("enemy name = " + enemy.getName());
 		}
 	}
 	
-	public void enterCombat(Party party, int xpos, int ypos)
+	public boolean movePlayerCharacter(PlayableCharacter player)
 	{	
-		Boolean enemiesAlive = true;
-		//Combat combat = new Combat(); // TODO: Not sure if combat should be instantiated here or in Tile with random encounters
+		Boolean turnsRemaining = true;
+		currentMoves = 0;
 		
-		instantiateCombat(party, xpos, ypos);
-		
-		while (enemiesAlive)
+		while (turnsRemaining)
 		{
-			for(Map.Entry<Integer, Player> entry : party.getParty().entrySet())
-			{
-				Boolean nextTurn = false;
-				int currentMoves = 0;
-				
-				while (!nextTurn)
+			JTextField movementField = new JTextField(5);
+			movementField.setBackground(Color.WHITE);
+			movementField.setForeground(Color.BLACK);
+			movementField.setFocusable(true);
+			movementField.requestFocusInWindow();
+
+		    JPanel movementChoicePanel = new JPanel();
+		    movementChoicePanel.setLayout(new GridBagLayout());
+		    movementChoicePanel.setPreferredSize(new Dimension(300, 150)); // change dimension here
+		    movementChoicePanel.setBackground(windowColor);
+		    movementChoicePanel.setForeground(Color.WHITE);
+		    movementChoicePanel.setBorder(new LineBorder(Color.WHITE));
+		    movementChoicePanel.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 14));
+		    JLabel prompt = new JLabel();
+		    prompt.setBackground(windowColor);
+		    prompt.setForeground(Color.WHITE);
+		    prompt.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 14));
+		    prompt.setText("Player " + party.getCurrentPlayerTurn() + ", " 
+		    		+ (player.getSpeed() - currentMoves) + " moves left: ");
+		    
+		    movementChoicePanel.add(prompt);
+		    movementChoicePanel.add(movementField);
+		    JOptionPane.showMessageDialog(null, movementChoicePanel);
+
+	    	String choice = movementField.getText();
+	    	System.out.println("Your choice is: " + choice);
+	    	
+	    	System.out.println("BEFORE: Player " + player.getName() + " xBlock = " + player.getXposBlock());
+	    	System.out.println("Player " + player.getName() + " yBlock = " + player.getYposBlock());
+
+	    	// convert from pixel values (player.getXpos()) to block values (for isValid())
+	    	int xBlocks = player.getXposBlock();
+	    	int yBlocks = player.getYposBlock();
+	    	
+	    	switch(choice) {
+	    	case "w":
+	    		if(player.getSpeed() - currentMoves != 0 && isValidMove(xBlocks, yBlocks - 1))
+					{
+	    				world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(false); // set old space to be movable
+	    				player.setYpos((yBlocks - 1) * (SCREEN_HEIGHT / ROWS));
+	    				player.setYposBlock(yBlocks - 1);
+						world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(true); // set new space to be taken
+						currentMoves++;
+						combatScreen.getContentPane().repaint();
+					}
+	    		break;
+			case "s":
+				if(player.getSpeed() - currentMoves != 0 && isValidMove(xBlocks, yBlocks + 1)) 
 				{
-					// updateMapforCombat(party, entry, grid, xpos, ypos);
-					System.out.println("What will you do "+ entry.getValue().getName() + "? WASD MOVES LEFT: " + (entry.getValue().getSpeed() - currentMoves)); 
-					this.queryUser();
-					switch(choice)
-					{
-					case "w":
-						if(entry.getValue().getSpeed() - currentMoves != 0 && isValidMove(entry.getValue().getXpos(), entry.getValue().getYpos() - 1, grid))
-						{
-							entry.getValue().decrementYPOS();
-							currentMoves++;
-						}
-						break;
-					case "s":
-						if(entry.getValue().getSpeed() - currentMoves != 0 && isValidMove(entry.getValue().getXpos(), entry.getValue().getYpos() + 1, grid)) 
-						{
-							entry.getValue().incrementYPOS();
-							currentMoves++;
-						}
-						break;
-					case "d":
-						if(entry.getValue().getSpeed() - currentMoves != 0 && isValidMove(entry.getValue().getXpos() + 1, entry.getValue().getYpos(), grid)) 
-						{
-							entry.getValue().incrementXPOS();
-							currentMoves++;
-						}
-						break;
-					case "a":
-						if(entry.getValue().getSpeed() - currentMoves != 0 && isValidMove(entry.getValue().getXpos() - 1, entry.getValue().getYpos(), grid)) 
-						{
-							entry.getValue().decrementXPOS();
-							currentMoves++;
-						}
-						break;
-					case "1":
-						System.out.println("Attack which Enemy? Enter Symbol (@/$/&) or (exit)");
-						this.queryUser();
-						switch (choice)
-						{
-							case "@":
-								party.getEnemies().get(0).setCurrentHP(party.getEnemies().get(0).getCurrentHP() - 10);
-								break;
-							case "$":
-								if (party.getEnemies().size() >= 2)
-								{
-									party.getEnemies().get(1).setCurrentHP(party.getEnemies().get(1).getCurrentHP() - 10);
-								}
-								else
-								{
-									System.out.println("Invalid Enemy");
-								}
-								break;
-							case "&":
-								if (party.getEnemies().size() >= 3)
-									party.getEnemies().get(2).setCurrentHP(party.getEnemies().get(2).getCurrentHP() - 10);
-								else
-								{
-									System.out.println("Invalid Enemy");
-								}
-								break;
-							case "%":
-								if (party.getEnemies().size() == 4)
-									party.getEnemies().get(3).setCurrentHP(party.getEnemies().get(3).getCurrentHP() - 10);
-								else
-								{
-									System.out.println("Invalid Enemy");
-								}
-								break;
-							case "exit":
-								break;
-							default:
-								break;
-						}
-						
-						nextTurn = true;
-						break;
-					case "flee":
-						if ( ((int)(Math.random() * 100) + 1) > party.getFleeChance())
-							{
-								return;	
-							}
-						else
-						{
-							System.out.println("Escape failed! -2 Health to every party member!");
-							for(Map.Entry<Integer, Player> member : party.getParty().entrySet())
-							{
-								Combat.damageAmt(member.getValue(), 2);
-							}
-						}
-						break;
-					default:
-						break;
-					}
-					if(party.getEnemies().get(0).getCurrentHP() <= 0 && party.getEnemies().get(1).getCurrentHP() <= 0 && party.getEnemies().get(2).getCurrentHP() <= 0)
-					{
-						enemiesAlive = false;
-						break;
-					}
+					world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(false);
+					player.setYpos((yBlocks + 1) * (SCREEN_HEIGHT / ROWS));	
+					player.setYposBlock(yBlocks + 1);
+					world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(true);
+					currentMoves++;
+					combatScreen.getContentPane().repaint();
 				}
+				break;
+			case "d":
+				if(player.getSpeed() - currentMoves != 0 && isValidMove(xBlocks + 1, yBlocks)) 
+				{
+					world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(false);
+					player.setXpos((xBlocks + 1) * (SCREEN_WIDTH / COLS));
+					player.setXposBlock(xBlocks + 1);
+					world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(true);
+					currentMoves++;
+					combatScreen.getContentPane().repaint();
+				}
+				break;
+			case "a":
+				if(player.getSpeed() - currentMoves != 0 && isValidMove(xBlocks - 1, yBlocks)) 
+				{
+					world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(false);
+					player.setXpos((xBlocks - 1) * (SCREEN_WIDTH / COLS));
+					player.setXposBlock(xBlocks - 1);
+					world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(true);
+					currentMoves++;
+					combatScreen.getContentPane().repaint();
+				}
+				break;
+			case "wd":
+				if(player.getSpeed() - currentMoves != 0 && isValidMove(xBlocks + 1, yBlocks - 1))
+				{
+    				world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(false); // set old space to be movable
+    				player.setYpos((yBlocks - 1) * (SCREEN_HEIGHT / ROWS));
+    				player.setXpos((xBlocks + 1) * (SCREEN_WIDTH / COLS));
+    				player.setYposBlock(yBlocks - 1);
+    				player.setXposBlock(xBlocks + 1);    				
+					world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(true); // set new space to be taken
+					currentMoves++;
+					combatScreen.getContentPane().repaint();
+				}
+				break;
+			case "wa":
+				if(player.getSpeed() - currentMoves != 0 && isValidMove(xBlocks - 1, yBlocks - 1))
+				{
+    				world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(false); // set old space to be movable
+    				player.setYpos((yBlocks - 1) * (SCREEN_HEIGHT / ROWS));
+    				player.setXpos((xBlocks - 1) * (SCREEN_WIDTH / COLS));
+    				player.setYposBlock(yBlocks - 1);
+    				player.setXposBlock(xBlocks - 1);    				
+					world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(true); // set new space to be taken
+					currentMoves++;
+					combatScreen.getContentPane().repaint();
+				}
+				break;
+			case "sd":
+				if(player.getSpeed() - currentMoves != 0 && isValidMove(xBlocks + 1, yBlocks + 1))
+				{
+    				world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(false); // set old space to be movable
+    				player.setYpos((yBlocks + 1) * (SCREEN_HEIGHT / ROWS));
+    				player.setXpos((xBlocks + 1) * (SCREEN_WIDTH / COLS));
+    				player.setYposBlock(yBlocks + 1);
+    				player.setXposBlock(xBlocks + 1);    				
+					world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(true); // set new space to be taken
+					currentMoves++;
+					combatScreen.getContentPane().repaint();
+				}
+				break;
+			case "sa":
+				if(player.getSpeed() - currentMoves != 0 && isValidMove(xBlocks - 1, yBlocks + 1))
+				{
+    				world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(false); // set old space to be movable
+    				player.setYpos((yBlocks + 1) * (SCREEN_HEIGHT / ROWS));
+    				player.setXpos((xBlocks - 1) * (SCREEN_WIDTH / COLS));
+    				player.setYposBlock(yBlocks + 1);
+    				player.setXposBlock(xBlocks - 1);    				
+					world[player.getYposBlock()][player.getXposBlock()].setHasPlayer(true); // set new space to be taken
+					currentMoves++;
+					combatScreen.getContentPane().repaint();
+				}
+				break;
+			case "e":
+			case "q":
+			case "stop":
+			case "0":
+				currentMoves = player.getSpeed();
+				break;
+			default:
+				break;
+	    		
+	    	}
+	    	System.out.println("AFTER: Player " + player.getName() + " xBlock = " + player.getXposBlock());
+	    	System.out.println("Player " + player.getName() + " yBlock = " + player.getYposBlock());
+	    	
+	    	if(player.getSpeed() - currentMoves == 0) {
+	    		turnsRemaining = false;
+	    		//System.out.println("NEXT MOVE");
+	    		
+	    		int count = 0;
+	    		for(Space[] space : world) {
+	    			for(Space tile : space) {
+	    				if(tile.hasPlayer()) {
+	    					count++;
+	    				}
+	    			}
+	    		}
+	    		System.out.println(count + " tiles have players.");
+	    	}
+		}
+
+		return true;
+	}
+	
+	 // fightResult key 
+	 // 0 = normal round, fight command worked
+	 // 1 = continue in same round, fight failed (out of range)
+	 // 2 = all enemies are dead, quit combat
+	public int tryFightCommand(PlayableCharacter player) {
+		int fightResult = 0;
+		currentMoves = 0;
+		
+		int closestEnemyIndex = party.getClosestEnemy(player);
+		
+		// if is in range, take damage
+		if(isInRange(player, party.getEnemies().get(closestEnemyIndex))) {
+			int A = player.getLevel(); // attacker's level
+			int B = player.getOffense(); // attacker's offense stat
+			int C = 2; // attack power
+			int D = party.getEnemies().get(closestEnemyIndex).getDefense(); // defender's defense stat
+			int min = 1;
+		    int max = 3;
+		    int Z = (int) (Math.floor(Math.random() * (max - min + 1)) + min);
+			int damage = ((((( 2*A + 2) * B * C) / D) + 8) / Z); // with level 1 and all stats at 2, values are 16, 8, and 5
+			
+			party.getEnemies().get(closestEnemyIndex).takeDamage(damage);
+			
+			JPanel damagePanel = new JPanel();
+			damagePanel.setLayout(new GridBagLayout());
+			damagePanel.setPreferredSize(new Dimension(300, 150)); // change dimension here
+			damagePanel.setBackground(windowColor);
+			damagePanel.setForeground(Color.WHITE);
+			damagePanel.setBorder(new LineBorder(Color.WHITE));
+			damagePanel.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 14));
+		    JLabel prompt = new JLabel();
+		    prompt.setBackground(windowColor);
+		    prompt.setForeground(Color.WHITE);
+		    prompt.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 14));
+		    
+		    String damageText = "Player " + player.getName() + " (p" + party.getCurrentPlayerTurn() + ")" 
+		    + " used FIGHT. " + "\n" +
+		    "Enemy " + party.getEnemies().get(closestEnemyIndex).getName() + " took " + 
+		    damage + " damage!" + "\n" + "It has " + party.getEnemies().get(closestEnemyIndex).getCurrentHP() + " HP remaining.";
+		    prompt.setText("<html>" + damageText.replaceAll("<","&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br/>") + "</html>");
+		    damagePanel.add(prompt);
+		    JOptionPane.showMessageDialog(null, damagePanel);
+		    
+		    // check if enemy is kill and if so, kill it
+		    if(party.getEnemies().get(closestEnemyIndex).getCurrentHP() == 0) {
+				System.out.println("Enemy is dead.");
+				party.getEnemies().get(closestEnemyIndex).setIsDead(true); // set as dead
+				// remove from world (world[y][x].hasPlayer(false))
+				world[party.getEnemies().get(closestEnemyIndex).getYposBlock()][party.getEnemies().get(closestEnemyIndex).getXposBlock()].setHasPlayer(false);
+				// move enemy off screen
+				party.getEnemies().get(closestEnemyIndex).setXposBlock(100); // FIXME:
+				party.getEnemies().get(closestEnemyIndex).setYposBlock(100);
+				// remove enemy sprite 
+				party.getEnemies().get(closestEnemyIndex).setSprite(party.getEnemies().get(closestEnemyIndex).getDeadEnemySpriteLoc()); // change to deadEnemy sprite
+				
+				// remove enemy from enemies list
+				party.removeEnemy(party.getEnemies().get(closestEnemyIndex));
+				combatScreen.getContentPane().repaint(); // repaint
+			}
+		    updateEnemyLabel();
+		    combatScreen.getContentPane().repaint(); // repaint
+		} else {
+			 	JPanel panel = new JPanel();
+			 	panel.setLayout(new GridBagLayout());
+			 	panel.setPreferredSize(new Dimension(400, 200)); // change dimension here
+			 	panel.setBackground(windowColor);
+			 	panel.setForeground(Color.WHITE);
+			 	panel.setBorder(new LineBorder(Color.WHITE));
+			 	panel.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 14));
+			    JLabel prompt = new JLabel();
+			    prompt.setBackground(windowColor);
+			    prompt.setForeground(Color.WHITE);
+			    prompt.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 14));
+			    String noRangeText = "Player " + player.getName() + " (p" + party.getCurrentPlayerTurn() + "):" + "\n" + 
+			    "There are no enemies in range...";
+			    prompt.setText("<html>" + noRangeText.replaceAll("<","&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br/>") + "</html>");
+			    panel.add(prompt);
+			    JOptionPane.showMessageDialog(null, panel);
+			    fightResult = 1;
+		}
+		
+
+		if(party.getEnemies().size() == 0)
+		{
+			fightResult = 2;
+		}
+		return fightResult;
+	}
+	
+	public Boolean doEnemyTurn(ArrayList<NPC> enemies) {
+		boolean isPartyAlive = true;
+		boolean didCombat = false;
+		// setup panel for display of combat information at end of enemy Turn
+		String damageText = "";
+		JPanel damagePanel = new JPanel();
+		damagePanel.setLayout(new GridBagLayout());
+		damagePanel.setPreferredSize(new Dimension(400, 400)); // change dimension here
+		damagePanel.setBackground(windowColor);
+		damagePanel.setForeground(Color.WHITE);
+		damagePanel.setBorder(new LineBorder(Color.WHITE));
+		damagePanel.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 14));
+	    JLabel prompt = new JLabel();
+	    prompt.setBackground(windowColor);
+	    prompt.setForeground(Color.WHITE);
+	    prompt.setFont(new Font("Monaco", Font.TRUETYPE_FONT, 14));
+	    
+		for(NPC enemy : enemies) {
+			Boolean turnsRemaining = true;
+			currentMoves = 0;
+			
+			while (turnsRemaining)
+			{
+		    	int xBlocks = enemy.getXposBlock();
+		    	int yBlocks = enemy.getYposBlock();
+		    	
+		    	int closestPlayerIndex = 1;
+		    	closestPlayerIndex = enemy.getNearestPlayer(party);
+		    	System.out.println("Closest Player Index = " + closestPlayerIndex);
+		    	
+		    	System.out.println("player yBlock = " + party.getParty().get(closestPlayerIndex).getYposBlock());
+		    	System.out.println("enemy yBlock = " + enemy.getYposBlock());
+		    	System.out.println("player xBlock = " + party.getParty().get(closestPlayerIndex).getXposBlock());
+		    	System.out.println("enemy xBlock = " + enemy.getXposBlock());
+		    	
+		    	// rudimentary AI
+		    	// Tries to match closest player's yPosBlock, then tries to match their xPosBlock
+		    	if(party.getParty().get(closestPlayerIndex).getYposBlock() > enemy.getYposBlock()) {
+		    		// go DOWN towards player
+		    		if(enemy.getSpeed() - currentMoves != 0 && isValidMove(xBlocks, yBlocks + 1)) 
+					{
+						world[enemy.getYposBlock()][enemy.getXposBlock()].setHasPlayer(false);
+						enemy.setYpos((yBlocks + 1) * (SCREEN_HEIGHT / ROWS));	
+						enemy.setYposBlock(yBlocks + 1);
+						world[enemy.getYposBlock()][enemy.getXposBlock()].setHasPlayer(true);
+						currentMoves++;
+						combatScreen.getContentPane().repaint();
+					} else { // do an attack on the player
+						doEnemyAttack(enemy, closestPlayerIndex, damageText, prompt);
+						didCombat = true;
+					    turnsRemaining = false; // end enemy turn immediately
+					    updateHealthLabel();
+					    combatScreen.getContentPane().repaint(); // repaint
+					}
+		    	} else if(party.getParty().get(closestPlayerIndex).getYposBlock() < enemy.getYposBlock()) {
+		    		// go UP towards player
+		    		if(enemy.getSpeed() - currentMoves != 0 && isValidMove(xBlocks, yBlocks - 1))
+					{
+	    				world[enemy.getYposBlock()][enemy.getXposBlock()].setHasPlayer(false); // set old space to be movable
+	    				enemy.setYpos((yBlocks - 1) * (SCREEN_HEIGHT / ROWS));
+	    				enemy.setYposBlock(yBlocks - 1);
+						world[enemy.getYposBlock()][enemy.getXposBlock()].setHasPlayer(true); // set new space to be taken
+						currentMoves++;
+						combatScreen.getContentPane().repaint();
+					} else { // do an attack on the player
+						doEnemyAttack(enemy, closestPlayerIndex, damageText, prompt);
+						didCombat = true;
+					    turnsRemaining = false; // end enemy turn immediately
+					    updateHealthLabel();
+					    combatScreen.getContentPane().repaint(); // repaint
+					}
+		    	
+		    	}else if(party.getParty().get(closestPlayerIndex).getXposBlock() > enemy.getXposBlock()) {
+		    		// go RIGHT
+		    		if(enemy.getSpeed() - currentMoves != 0 && isValidMove(xBlocks + 1, yBlocks)) 
+					{
+						world[enemy.getYposBlock()][enemy.getXposBlock()].setHasPlayer(false);
+						enemy.setXpos((xBlocks + 1) * (SCREEN_WIDTH / COLS));
+						enemy.setXposBlock(xBlocks + 1);
+						world[enemy.getYposBlock()][enemy.getXposBlock()].setHasPlayer(true);
+						currentMoves++;
+						combatScreen.getContentPane().repaint();
+					} else { // do an attack on the player
+						doEnemyAttack(enemy, closestPlayerIndex, damageText, prompt);
+						didCombat = true;
+					    turnsRemaining = false; // end enemy turn immediately
+					    updateHealthLabel();
+					    combatScreen.getContentPane().repaint(); // repaint
+					}
+		    	} else if(party.getParty().get(closestPlayerIndex).getXposBlock() < enemy.getXposBlock()) {
+		    		// go LEFT
+		    		if(enemy.getSpeed() - currentMoves != 0 && isValidMove(xBlocks - 1, yBlocks)) 
+					{
+						world[enemy.getYposBlock()][enemy.getXposBlock()].setHasPlayer(false);
+						enemy.setXpos((xBlocks - 1) * (SCREEN_WIDTH / COLS));
+						enemy.setXposBlock(xBlocks - 1);
+						world[enemy.getYposBlock()][enemy.getXposBlock()].setHasPlayer(true);
+						currentMoves++;
+						combatScreen.getContentPane().repaint();
+					} else {
+						doEnemyAttack(enemy, closestPlayerIndex, damageText, prompt);
+						didCombat = true;
+					    turnsRemaining = false; // end enemy turn immediately
+					    updateHealthLabel();
+					    combatScreen.getContentPane().repaint(); // repaint
+					}
+		    	} 
+		    	
+		    	// ends current enemy turn
+				if(enemy.getSpeed() - currentMoves == 0) {
+					System.out.println("END ENEMY TURN");
+		    		turnsRemaining = false;
+		    	}
 			}
 		}
-		return;
+		if(didCombat) { // display damage info
+			damagePanel.add(prompt);
+			JOptionPane.showMessageDialog(null, damagePanel);
+		    
+		    // check if ENTIRE party is kill, if set isPartyAlive = false
+			int deadCount = 0;
+			for(Map.Entry<Integer, Player> player : party.getParty().entrySet()) {
+				if(player.getValue().isDead()) {
+					deadCount++;
+				}
+			} // entire party is dead, return false to handleFight() and exit game
+			if(deadCount == party.getNumPlayers()) {
+				isPartyAlive = false;
+			}
+		}
+		
+		return isPartyAlive;
+	}
+	
+	public void doEnemyAttack(NPC enemy, int closestPlayerIndex, String damageText, JLabel prompt) {
+		System.out.println("ENEMY enters combat!");
+		// do an attack on the closest player
+		int A = enemy.getLevel(); // attacker's level
+		int B = enemy.getOffense(); // attacker's offense stat
+		int C = 2; // attack power
+		int D = party.getParty().get(closestPlayerIndex).getDefense(); // defender's defense stat
+		int min = 1;
+	    int max = 3;
+	    int Z = (int) (Math.floor(Math.random() * (max - min + 1)) + min);
+		int damage = ((((( 2*A + 2) * B * C) / D) + 8) / Z); // with level 1 and all stats at 2, values are 16, 8, and 5
+		
+		party.getParty().get(closestPlayerIndex).takeDamage(damage);
+		
+	    damageText += "Enemy " + enemy.getName()  + " used FIGHT. " + "\n" +
+	    "Player " + party.getParty().get(closestPlayerIndex).getName() + " took " + 
+	    damage + " damage!" + "\n" + party.getParty().get(closestPlayerIndex).getName() +" has " +
+	    party.getParty().get(closestPlayerIndex).getCurrentHP() + " HP remaining." + "\n";
+	    prompt.setText("<html>" + damageText.replaceAll("<","&lt;").replaceAll(">", "&gt;").replaceAll("\n", "<br/>") + "</html>");
+	    
+	    // check if player is kill and if so, kill it
+	    if(party.getParty().get(closestPlayerIndex).getCurrentHP() == 0) {
+			System.out.println("PLAYER is dead.");
+			party.getParty().get(closestPlayerIndex).setIsDead(true); // set as dead
+			// remove from world (world[y][x].hasPlayer(false))
+			world[party.getParty().get(closestPlayerIndex).getYposBlock()][party.getParty().get(closestPlayerIndex).getXposBlock()].setHasPlayer(false);
+			// move player off screen (neccesary for repaint)
+			party.getParty().get(closestPlayerIndex).setXposBlock(100); // FIXME:
+			party.getParty().get(closestPlayerIndex).setYposBlock(100);
+			// remove enemy sprite 
+			//party.getEnemies().get(closestEnemyIndex).setSprite(party.getEnemies().get(closestEnemyIndex).getDeadEnemySpriteLoc()); // change to deadEnemy sprite
+			
+			// remove player from party list
+			//party.removePlayer(closestPlayerIndex);
+			combatScreen.getContentPane().repaint(); // repaint
+		}
+
+	}
+	
+	// for flee attempt
+	public static void damageAmt(PlayableCharacter chr, int amt)
+	{
+		chr.setCurrentHP(chr.getCurrentHP() - 2);
 	}
 	
 	public boolean isInRange(PlayableCharacter p, PlayableCharacter e) {
@@ -476,8 +872,8 @@ public class Combat extends Tile{
 		int enemyX = 0;
 		
 		//calculate distance from player
-		enemyY = e.getYpos() - p.getYpos();
-		enemyX = e.getXpos() - p.getXpos();
+		enemyY = e.getYposBlock() - p.getYposBlock();
+		enemyX = e.getXposBlock() - p.getXposBlock();
 		dist = (int) Math.sqrt(Math.pow(enemyX, 2) + Math.pow(enemyY, 2));
 		
 		if (p.getKit() == "Warrior") {
@@ -516,36 +912,155 @@ public class Combat extends Tile{
 	// Combat Menu handling functions
 	//////////////////////////////////////////////////////////
 	private class CombatListener implements ActionListener {
-
+		    
 		@Override
 		public void actionPerformed(ActionEvent event) {
 			JButton source = (JButton)(event.getSource());
 			
 			if(source.equals(combatPane.getNumberButtons()[0])) {
-				// handleFight();
+				handleMove();
 			} else if(source.equals(combatPane.getNumberButtons()[1])) {
-				// handleAbilities();
+				handleFight();
+				
 			} else if(source.equals(combatPane.getNumberButtons()[2])) {
-				handleFlee();
+				handleAbilities();
+				
 			} else if(source.equals(combatPane.getNumberButtons()[3])) {
-				// handleSkip();
+				handleFlee();
+				
 			} else if(source.equals(combatPane.getNumberButtons()[4])) {
-				// ...
+				handleSkip();
 			} 
 		}	
 		
-		private void handleFlee() {
-			if ( ((int)(Math.random() * 100) + 1) > party.getFleeChance())
-			{
+		
+		private void handleMove() {
+			// TODO: REPAINT player ranges functionality
+			//combatPanel.remove(mapPanel); // remove mapPanel
+			//showPlayerRange(party.getParty().get(party.getCurrentPlayerTurn())); // repaint mapPanel with player range
+																				// adjust for each player's current location
+			//combatPanel.add(mapPanel); // add mapPanel back on
+			
+			// do enemy turn, movement
+			if(party.getCurrentPlayerTurn() == enemyTurn) {
+				doEnemyTurn(party.getEnemies());
+				party.nextPlayerTurn();
+				updateHealthLabel();
+			} else {
+				// turn does not end with move, can still use FIGHT
+				if(party.getParty().get(party.getCurrentPlayerTurn()).canMove() && 
+						!party.getParty().get(party.getCurrentPlayerTurn()).isDead()) { // if player is dead, disallows move, maybe diable buttons
+					movePlayerCharacter(party.getParty().get(party.getCurrentPlayerTurn()));
+					party.getParty().get(party.getCurrentPlayerTurn()).setCanMove(false);
+				}
+				currentMoves = 0;
+			}
+			
+		}
+		
+		// Each player's turn ends in FIGHT command
+		private void handleFight() {
+			// do enemy turn, movement
+			if(party.getCurrentPlayerTurn() == enemyTurn) {
+				Boolean isPartyAlive = doEnemyTurn(party.getEnemies());
+				if(!isPartyAlive) {
+					// quit entire game
+					System.exit(0);
+				}
+				party.nextPlayerTurn();
+				updateHealthLabel();
+			}
+						
+			int fightResult = 0; // 0 = normal round, fight command worked
+								 // 1 = continue in same round, fight failed (out of range)
+								 // 2 = all enemies are dead, quit combat
+			if (!party.getParty().get(party.getCurrentPlayerTurn()).isDead()) {
+				fightResult = tryFightCommand(party.getParty().get(party.getCurrentPlayerTurn()));
+			} else {
+				// if dead, skip turn
+				fightResult = 3;
+			}
+
+			if(fightResult == 0) {
+				party.getParty().get(party.getCurrentPlayerTurn()).setCanMove(true);
+				party.nextPlayerTurn();
+				updateHealthLabel();
+				currentMoves = 0;
+			} else if(fightResult == 1) {
+				currentMoves = 0;
+				// stay with same player
+			}
+			else if(fightResult == 2) {
+				// set all players canMove() to true for next time
+				for(Map.Entry<Integer, Player> player : party.getParty().entrySet()) {
+					player.getValue().setCanMove(true);
+				}
+
 				// quit combat
 				combatScreen.remove(combatPanel);
 				combatScreen.dispose();
+				
+				// change party isInCombat bool to false
+				party.setInCombat(false);
+				// remove enemies from enemies list in party
+				party.clearEnemies();
+				
+				endCombat = true; // end combat, switch to OVERWORLD
 				try {
 					fightMusic.stop();
 				} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
 					e.printStackTrace();
 				}
+			} else if(fightResult == 3) {
+				party.nextPlayerTurn();
+				updateHealthLabel();
+				currentMoves = 0;
+			}
+		}
+		
+		private void handleSkip() {
+			// do enemy turn, movement
+			if(party.getCurrentPlayerTurn() == enemyTurn) {
+				doEnemyTurn(party.getEnemies());
+				party.nextPlayerTurn();
+				updateHealthLabel();
+			}
+			
+			party.getParty().get(party.getCurrentPlayerTurn()).setCanMove(true);
+			party.nextPlayerTurn();
+			updateHealthLabel();
+		}
+		
+		private void handleFlee() {
+			// do enemy turn, movement
+			if(party.getCurrentPlayerTurn() == enemyTurn) {
+				doEnemyTurn(party.getEnemies());
+				party.nextPlayerTurn();
+				updateHealthLabel();
+			}
+			
+			if ( ((int)(Math.random() * 100) + 1) > party.getFleeChance())
+			{
+				// set all players canMove() to true for next time
+				for(Map.Entry<Integer, Player> player : party.getParty().entrySet()) {
+					player.getValue().setCanMove(true);
+				}
+				// quit combat
+				combatScreen.remove(combatPanel);
+				combatScreen.dispose();
 				
+				// change party isInCombat bool to false
+				party.setInCombat(false);
+				// remove enemies from enemies list in party
+				party.clearEnemies();
+				
+				endCombat = true; // end combat, switch to OVERWORLD
+				try {
+					fightMusic.stop();
+				} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+					e.printStackTrace();
+				}
+						
 			}
 		else
 		{
@@ -555,6 +1070,15 @@ public class Combat extends Tile{
 				Combat.damageAmt(member.getValue(), 2);
 			}
 		}
+		}
+		
+		// does nothing for now, but advance enemy turn
+		private void handleAbilities() {
+			if(party.getCurrentPlayerTurn() == enemyTurn) {
+				doEnemyTurn(party.getEnemies());
+				party.nextPlayerTurn();
+				updateHealthLabel();
+			}
 		}
 	}
 	
@@ -575,7 +1099,7 @@ public class Combat extends Tile{
 	    }
 
 	    public void paintComponent(Graphics g) {
-	        super.paintComponent(g);       
+	        super.paintComponent(g);  
 	     // layer 1 - background
 	    	for (int i = 0; i < ROWS; i++) {
 	    	    for (int j = 0; j < COLS; j++) {
@@ -591,34 +1115,40 @@ public class Combat extends Tile{
 	    	// layer 2 - objects, foilage, terrain
 	        // ...
 
-	    	//layer 3 - sprites
+	    	//Layer 3 - sprites
 	    	
-	    	// TODO: Change to make less consistent
-	    	int i = 0;
+	    	// The rationale behind this for loop: party sprite painting
+	    	// first the party position is converted into block units by dividing by a factor of pixel densisty (32x32) 
+	    	//       and dropping the decimal
+	    	// next the block units are reconverted into pixel units by multiplying by a factor of pixel density (32x32)
+	    	// this ensures that the sprites and players will be locked into single blocks
+	    	
 	    	for(Map.Entry<Integer, Player> player : party.getParty().entrySet()) {
-	    		System.out.println("i = " + i);
-	    		System.out.println("party.getPartyXpos() = " + party.getPartyXpos());
-	    		System.out.println("party.getPartyYpos() = " + party.getPartyYpos());
+	    
+	    		int xBlocks = player.getValue().getXposBlock();
+	     		int yBlocks = player.getValue().getYposBlock();
+
+	     		int xPixels = xBlocks * (SCREEN_WIDTH / COLS);
+	     		int yPixels = yBlocks * (SCREEN_HEIGHT / ROWS);
+	     		
+	     		if(!player.getValue().isDead()) {
+	     			g.drawImage(player.getValue().getSprite(), xPixels, yPixels, null);
+	     		}
 	    		
-	    		g.drawImage(player.getValue().getSprite(), party.getPartyXpos(), party.getPartyYpos(), null);
-	    		party.setPartyYpos(party.getPartyYpos() + 64);
-	    		i++;
 	    	}
 	    	
+	    	// party positions are already in pixel units divisible by 32 (done in instantiateCombat())
 	    	for(NPC enemy : party.getEnemies()) {
-	    		System.out.println("enemy name = " + enemy.getName());
-	    		System.out.println("BEFORE CONVERSION: enemy.getXpos() = " + enemy.getXpos());
-	    		System.out.println("BEFORE: enemy.getYpos() = " + enemy.getYpos());
 	    		
-	    		// Reconvert block units back to pixel units (block units come from instantiateCombat())
-	     		int xpos = enemy.getXpos() * (SCREEN_WIDTH / COLS); // xposPX / 32
-	     		int ypos = enemy.getYpos() * (SCREEN_HEIGHT / ROWS); 
-	     		
-	     		System.out.println("AFTER CONVERSION: enemy.getXpos() = " + xpos);
-	    		System.out.println("AFTER: enemy.getYpos() = " + ypos);
-	    		
+	    		// Block unit to pixels
+	     		int xpos = enemy.getXposBlock() * (SCREEN_WIDTH / COLS); // xposPX / 32
+	     		int ypos = enemy.getYposBlock() * (SCREEN_HEIGHT / ROWS); 
+	  		
 	    		g.drawImage(enemy.getSprite(), xpos, ypos, null);
 	    	}
 	    }  
 	}
+
+	
+
 }

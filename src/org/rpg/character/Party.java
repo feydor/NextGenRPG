@@ -1,5 +1,6 @@
 package org.rpg.character;
 
+import java.awt.geom.Point2D;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Map;
@@ -24,6 +25,8 @@ public class Party implements Serializable{
 	private ArrayList<NPC> enemies;
 	private int PartyXpos;
 	private int PartyYpos;
+	private int currentPlayerTurn;
+	private int partyTurns; // how many turns a party has made, after each party turn, the enemies move
 	
 	public Party() {
 		party = new TreeMap<Integer, Player>();
@@ -33,6 +36,16 @@ public class Party implements Serializable{
 		numPlayers = 4;
 		PartyXpos = 1;
 		PartyYpos = 1;
+		currentPlayerTurn = 1;
+		partyTurns = 0;
+	}
+	
+	public int getPartyTurns() {
+		return partyTurns;
+	}
+	
+	public void incrementPartyTurns() {
+		partyTurns++;
 	}
 	
 	public int getPartyXpos() {
@@ -84,6 +97,19 @@ public class Party implements Serializable{
 		this.fleeChance = fleeChance;
 	}
 	
+	public int getCurrentPlayerTurn() {
+		return currentPlayerTurn;
+	}
+	
+	// makes sure valid player turns are 1 - 5 (5 is the enemy ai)
+	public void nextPlayerTurn() { // FIXME:
+		if((currentPlayerTurn + 1) <= numPlayers + 1 ) { 
+			currentPlayerTurn++;
+		} else {
+			currentPlayerTurn = 1;
+		}
+	}
+	
 	public Map<Integer, Player> getParty() { return party; }
 	
 	public void setParty(Map<Integer, Player> party) { this.party = party; }
@@ -130,6 +156,26 @@ public class Party implements Serializable{
 		enemies.clear();
 	}
 	
+	// Uses Point2D to find the distance between every enemy on the party enemyList and the specified player
+	// returns the closest one (its index)
+	public int getClosestEnemy(PlayableCharacter player) {
+		int smallestDistance = 1000; // high number to make sure that first enemy picked will be set to smallestDistance
+		int closestEnemyIndex = 0;
+		
+		for(int i = 0; i < enemies.size(); i++) {
+			int sampleDistance = (int) Point2D.distance(player.getXposBlock(), player.getYposBlock(),
+					enemies.get(i).getXposBlock(), enemies.get(i).getYposBlock());
+			// checks to see if it found a new smallestDistance,
+			// if so save it and the index of the enemy
+			if(sampleDistance < smallestDistance) {
+				smallestDistance = sampleDistance;
+				closestEnemyIndex = i;
+			}
+		}
+
+		return closestEnemyIndex;
+	}
+	
     public void instantiateAbilityList()
     {
     	Abilities AllAbilities = new Abilities(); 
@@ -149,6 +195,16 @@ public class Party implements Serializable{
 	    	}
     	}
     }
+
+	public void removeEnemy(NPC npc) {
+		enemies.remove(npc);
+	}
+
+	public void removePlayer(Integer playerIndex) {
+		party.remove(playerIndex);
+	}
+
+	
 	
 	// upon entering a new game, re-construct party members.
 	// neccesary to wipe party data to prevent user from exiting to title and reentering, without saving
