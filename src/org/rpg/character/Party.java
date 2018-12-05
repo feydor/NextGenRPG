@@ -27,6 +27,7 @@ public class Party implements Serializable{
 	private int PartyYpos;
 	private int currentPlayerTurn;
 	private int partyTurns; // how many turns a party has made, after each party turn, the enemies move
+	private Boolean isPartyAlive;
 	
 	public Party() {
 		party = new TreeMap<Integer, Player>();
@@ -38,6 +39,7 @@ public class Party implements Serializable{
 		PartyYpos = 1;
 		currentPlayerTurn = 1;
 		partyTurns = 0;
+		isPartyAlive = true;
 	}
 	
 	public int getPartyTurns() {
@@ -102,7 +104,7 @@ public class Party implements Serializable{
 	}
 	
 	// makes sure valid player turns are 1 - 5 (5 is the enemy ai)
-	public void nextPlayerTurn() { // FIXME:
+	public void nextPlayerTurn() { 
 		if((currentPlayerTurn + 1) <= numPlayers + 1 ) { 
 			currentPlayerTurn++;
 		} else {
@@ -202,6 +204,15 @@ public class Party implements Serializable{
 
 	public void removePlayer(Integer playerIndex) {
 		party.remove(playerIndex);
+	}
+
+	// getters and setters for isPartyAlive (used to check for end game criteria i Combat.java)
+	public void setIsPartyAlive(boolean b) {
+		isPartyAlive = b;		
+	}
+	
+	public Boolean isPartyAlive() {
+		return isPartyAlive;
 	}
 
 	

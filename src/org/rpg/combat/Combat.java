@@ -56,8 +56,8 @@ public class Combat extends JPanel{
     private JPanel mapPanel; // will be handled by private inner class MapScreen
     private JLabel healthLabel;
     private JLabel enemyNameLabel;
-	private String bgMusic = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/music/firstCampaign.wav";
-	//private String bgMusic = "https://s3-us-west-1.amazonaws.com/nextgenrpgassets/firstCampaign.wav";
+	//private String bgMusic = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/music/firstCampaign.wav";
+	private String bgMusic = "https://s3-us-west-1.amazonaws.com/nextgenrpgassets/firstCampaign.wav";
     private Color windowColor;
 	private Color bgColor;
 	private ButtonPane combatPane;
@@ -67,7 +67,7 @@ public class Combat extends JPanel{
 	private Party party;
 	private Space[][] world;
 	private int currentMoves; // Determines how many moves a player has made so far, for their turn
-	private final int enemyTurn = 5; // on currentPlayerTurn == 5, move ai
+	private int enemyTurn; // on currentPlayerTurn, move ai, set to be party.numPlayers + 1
 	
 	protected static final int SCREEN_WIDTH = 1024; // px
     protected static final int SCREEN_HEIGHT = 1024;
@@ -97,6 +97,7 @@ public class Combat extends JPanel{
 	// the main setup function
 	public void update(Party partyOverWorld, Space[][] worldTile) {
 		setPartyCombat(partyOverWorld);
+		enemyTurn = party.getNumPlayers() + 1; // sets the enemy turn number (always 1 more than number of Players)
 	   	party.getParty().get(1).setXpos(party.getPartyXpos()); // instantiate p1 position to be at party position
     	party.getParty().get(1).setYpos(party.getPartyYpos());
 		setWorldGrid(worldTile);
@@ -111,7 +112,7 @@ public class Combat extends JPanel{
     	combatScreen.add(combatPanel);
     	combatScreen.setVisible(true);	
     	try {
-			fightMusic = new AudioPlayer(bgMusic); // NOTE: remove NET to stream from local file at bgMusic
+			fightMusic = new AudioPlayer(bgMusic, "NET"); // NOTE: remove NET to stream from local file at bgMusic
 			fightMusic.play();								// also uncomment bgMusic above
 		} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
 			e.printStackTrace();
@@ -805,7 +806,7 @@ public class Combat extends JPanel{
 			damagePanel.add(prompt);
 			JOptionPane.showMessageDialog(null, damagePanel);
 		    
-		    // check if ENTIRE party is kill, if set isPartyAlive = false
+		    // check if ENTIRE party is kill, if so, set isPartyAlive = false
 			int deadCount = 0;
 			for(Map.Entry<Integer, Player> player : party.getParty().entrySet()) {
 				if(player.getValue().isDead()) {
@@ -813,6 +814,7 @@ public class Combat extends JPanel{
 				}
 			} // entire party is dead, return false to handleFight() and exit game
 			if(deadCount == party.getNumPlayers()) {
+				party.setIsPartyAlive(false); // set boolean isPartyAlive in party to false
 				isPartyAlive = false;
 			}
 		}
@@ -942,11 +944,16 @@ public class Combat extends JPanel{
 			//combatPanel.add(mapPanel); // add mapPanel back on
 			
 			// do enemy turn, movement
-			if(party.getCurrentPlayerTurn() == enemyTurn) {
+			if(party.getCurrentPlayerTurn() == enemyTurn && 
+					party.isPartyAlive()) {
 				doEnemyTurn(party.getEnemies());
 				party.nextPlayerTurn();
 				updateHealthLabel();
 			} else {
+				if(!party.isPartyAlive()) { // end game criteria
+					// quit entire game
+					System.exit(0);
+				}
 				// turn does not end with move, can still use FIGHT
 				if(party.getParty().get(party.getCurrentPlayerTurn()).canMove() && 
 						!party.getParty().get(party.getCurrentPlayerTurn()).isDead()) { // if player is dead, disallows move, maybe diable buttons
@@ -961,7 +968,8 @@ public class Combat extends JPanel{
 		// Each player's turn ends in FIGHT command
 		private void handleFight() {
 			// do enemy turn, movement
-			if(party.getCurrentPlayerTurn() == enemyTurn) {
+			if(party.getCurrentPlayerTurn() == enemyTurn && party.isPartyAlive()) {
+				
 				Boolean isPartyAlive = doEnemyTurn(party.getEnemies());
 				if(!isPartyAlive) {
 					// quit entire game
@@ -969,6 +977,13 @@ public class Combat extends JPanel{
 				}
 				party.nextPlayerTurn();
 				updateHealthLabel();
+			} else {
+				// either not enemy turn and so do nothing 
+				// OR the party is not alive and so we must QUIT
+				if(!party.isPartyAlive()) { // end game criteria
+					// quit entire game
+					System.exit(0);
+				}
 			}
 						
 			int fightResult = 0; // 0 = normal round, fight command worked
@@ -1020,10 +1035,17 @@ public class Combat extends JPanel{
 		
 		private void handleSkip() {
 			// do enemy turn, movement
-			if(party.getCurrentPlayerTurn() == enemyTurn) {
+			if(party.getCurrentPlayerTurn() == enemyTurn && party.isPartyAlive()) {
 				doEnemyTurn(party.getEnemies());
 				party.nextPlayerTurn();
 				updateHealthLabel();
+			} else {
+				// either not enemy turn and so do nothing 
+				// OR the party is not alive and so we must QUIT
+				if(!party.isPartyAlive()) { // end game criteria
+					// quit entire game
+					System.exit(0);
+				}
 			}
 			
 			party.getParty().get(party.getCurrentPlayerTurn()).setCanMove(true);
@@ -1033,10 +1055,17 @@ public class Combat extends JPanel{
 		
 		private void handleFlee() {
 			// do enemy turn, movement
-			if(party.getCurrentPlayerTurn() == enemyTurn) {
+			if(party.getCurrentPlayerTurn() == enemyTurn && party.isPartyAlive()) {
 				doEnemyTurn(party.getEnemies());
 				party.nextPlayerTurn();
 				updateHealthLabel();
+			} else {
+				// either not enemy turn and so do nothing 
+				// OR the party is not alive and so we must QUIT
+				if(!party.isPartyAlive()) { // end game criteria
+					// quit entire game
+					System.exit(0);
+				}
 			}
 			
 			if ( ((int)(Math.random() * 100) + 1) > party.getFleeChance())
