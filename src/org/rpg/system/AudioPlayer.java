@@ -13,6 +13,7 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException; 
 
 //Java program to play an audio file using Clip Object 
+// NOTE: Music files are on /bin/res/music/
 public class AudioPlayer  { 
 
  Long currentFrame; // to store current position 
@@ -28,11 +29,12 @@ public class AudioPlayer  {
      IOException, LineUnavailableException  
  { 
 	 // use default filepath
-	 filePath = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/music/firstCampaign.wav";
+	 filePath = "firstCampaign.wav";
 	 
      // create AudioInputStream object 
+	// NOTE: Music files are on /bin/res/music/
      audioInputStream =  
-             AudioSystem.getAudioInputStream(new File(filePath).getAbsoluteFile()); 
+             AudioSystem.getAudioInputStream(this.getClass().getResource("/res/music/" + filePath)); 
        
      // create clip reference 
      clip = AudioSystem.getClip(); 
@@ -49,8 +51,9 @@ public class AudioPlayer  {
 	 { 
 	 	filePath = filePathParam; 
 	 	// create AudioInputStream object 
+	 	// NOTE: Music files are on /bin/res/music/
 	     audioInputStream =  
-	             AudioSystem.getAudioInputStream(new File(filePath).getAbsoluteFile()); 
+	             AudioSystem.getAudioInputStream(this.getClass().getResource("/res/music/" + filePath)); 
 	       
 	     // create clip reference 
 	     clip = AudioSystem.getClip(); 
@@ -92,7 +95,6 @@ public class AudioPlayer  {
  { 
      try
      { 
-         String filePath = "Your path for the file"; 
          AudioPlayer audioPlayer =  
                          new AudioPlayer(); 
            

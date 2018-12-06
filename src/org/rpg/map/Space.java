@@ -1,9 +1,7 @@
 package org.rpg.map;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 
 import javax.imageio.ImageIO;
 
@@ -18,12 +16,13 @@ public class Space implements TileIndex{
 	// ...
 	private int spriteIndex;
 	private BufferedImage image;
-	private String grassLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/grass.png";
-	private String waterLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/water.png";
-	private String rockLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/rock.png";
-	private String dirtLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/dirt.png";
-	private String pathLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/path.png";
-	private String treeLoc = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_GroupProjectCombined/res/tiles/oak.png";
+	// NOTE: Images are in /bin/res/
+	private String grassLoc = "grass.png";
+	private String waterLoc = "water.png";
+	private String rockLoc = "rock.png";
+	private String dirtLoc = "dirt.png";
+	private String pathLoc = "path.png";
+	private String treeLoc = "oak.png";
 	
 	private boolean hasTreasure;
 	private boolean hasNPC;
@@ -79,9 +78,11 @@ public class Space implements TileIndex{
 	}
 	
 	// takes a fileLocation string and instantiates the private member variable image
-    public void loadImageFromFile(String fileLocation) {
+    public void loadImageFromFile(String fileName) {
     	try {    		
-    		setImage(ImageIO.read(new File(fileLocation)));
+    		// NOTE: Images are in /bin/res/
+    		image = ImageIO.read(this.getClass().getResource("/res/tiles/" + fileName));
+    		//setImage(ImageIO.read(new File(fileLocation)));
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -96,7 +97,7 @@ public class Space implements TileIndex{
     		break;
     	}
     	try {    		
-    		return ImageIO.read(new File(location));
+    		return ImageIO.read(this.getClass().getResource("/res/tiles/" + location));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -126,18 +127,5 @@ public class Space implements TileIndex{
 	
 	public void setHasPlayer(Boolean tf) { hasPlayer = tf; }
 
-	
-
-
-	/*public void print() {
-		if (!hasPlayer) 
-		{	
-			System.out.print(sprite);
-		}
-		else
-		{
-			System.out.print(ssprite);
-		}	
-	}*/
 }
 

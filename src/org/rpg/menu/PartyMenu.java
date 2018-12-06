@@ -1,7 +1,6 @@
 package org.rpg.menu;
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -12,30 +11,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
 
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 
@@ -43,8 +26,6 @@ import org.rpg.character.Party;
 import org.rpg.character.Player;
 import org.rpg.item.EquipableItem;
 import org.rpg.item.Item;
-import org.rpg.map.Tile;
-import org.rpg.system.KeyBinding;
 
 public class PartyMenu {
 	private Party party;
@@ -465,16 +446,15 @@ public class PartyMenu {
 
 	}
 	
+	// TODO: Make something happen when pressing item buttons
 	private class ItemsListener implements ActionListener {
-
+		
 		@Override
 		public void actionPerformed(ActionEvent event) {
-			JButton source = (JButton)(event.getSource());
+			//JButton source = (JButton)(event.getSource());
 			
 		}
-		
-		
-	
+
 	}
 	
 	//////////////////////////////////////////////////////////

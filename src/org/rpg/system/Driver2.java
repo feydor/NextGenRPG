@@ -1,7 +1,5 @@
 package org.rpg.system;
 
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
 
 import org.rpg.character.*;
 import org.rpg.combat.*;

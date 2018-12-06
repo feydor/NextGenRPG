@@ -8,56 +8,36 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.InputMap;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
-import javax.swing.Timer;
 import javax.swing.border.LineBorder;
 
 import org.rpg.character.*;
 import org.rpg.map.*;
 import org.rpg.menu.ButtonPane;
 import org.rpg.system.AudioPlayer;
-import org.rpg.system.Dir;
-import org.rpg.system.KeyBinding;
 
+@SuppressWarnings("serial")
 public class Combat extends JPanel{
 	private JFrame combatScreen;
     private JPanel combatPanel; 
     private JPanel mapPanel; // will be handled by private inner class MapScreen
     private JLabel healthLabel;
     private JLabel enemyNameLabel;
-	//private String bgMusic = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/music/firstCampaign.wav";
-	private String bgMusic = "https://s3-us-west-1.amazonaws.com/nextgenrpgassets/firstCampaign.wav";
+	private String bgMusic = "firstCampaign.wav";
+	//private String bgMusic = "https://s3-us-west-1.amazonaws.com/nextgenrpgassets/firstCampaign.wav";
     private Color windowColor;
 	private Color bgColor;
 	private ButtonPane combatPane;
@@ -84,6 +64,31 @@ public class Combat extends JPanel{
 	private int distPlayers = 4; //closeness of party to their center [friendly and enemy]
 	private int distEnemies = 8; //how far apart friendly and enemies centers are
 	public static boolean endCombat;
+	
+	////////////////////////////////////////////////////////////////////////////////////////
+	// Combat.java - logical flow
+	// 1. Instantiate a new Combat object with Combat(), sets up final variables
+	// 2. Call Combat.update(Party party, Space[][] world).
+	// 		2.1. Sets party and world private variables; sets p1 location, enemyTurn variable, etc.
+	//		2.2. Draws combatScreen frame and starts up music.
+	//  	2.3. Button actionListener is set up here (private inner class CombatListener)
+	// 3. User clicks on options and begins movement, attacks, skipping turns, or fleeing.
+	//		3.1. Each party member can both move and fight in each of their turns. 
+	//		3.2. Pressing "END TURN", ends the current player's turn and begins the next.
+	//		3.3. When all party member's have taken their turn (currentMoves == party.getNumPLayers()),
+	//			 The enemy takes their turn. See doEnemyTurn() and doEnenmyAttack().
+	//      3.4. doEnemyTurn() makes each enemy increase their xBlock and yBlock (y position has priority),
+	//           to that of the nearest player that turn.
+	//	    3.5. If enemy is in range of the closest player, that is, the enemy's xBlock and yBlock are equal to the 
+	//			 closest player AND there is no valid move within movement range (the speed stat), then attack the player.
+	// 		3.6. See doEnemyAttack() and tryFightCommand() for the damage formula.
+	//		3.7. tryFightCommand() checks for enemy deaths and if so:
+	//			 					(1). sets their isDead boolean to true,
+	//								(2). removes enemy from party.enemies list,
+	//								(3). returns 2 if all enemies are dead (check handleFight() for other return values)
+	// 4. Combat continues until either: (1). the enemies are all dead (isDead boolean), (2). the entire party is dead, or (3). user presses flee
+	//		4.1. See handleMove(), handleFight(), and handleFLee() for exit conditions.
+	//		4.2. After all damage calculatons, healthLabel is updated with updateHealthLabel() and enemyNameLabel with updateEnemyNameLabel().
 	
 	public Combat() 
 	{
@@ -112,7 +117,7 @@ public class Combat extends JPanel{
     	combatScreen.add(combatPanel);
     	combatScreen.setVisible(true);	
     	try {
-			fightMusic = new AudioPlayer(bgMusic, "NET"); // NOTE: remove NET to stream from local file at bgMusic
+			fightMusic = new AudioPlayer(bgMusic); // NOTE: remove NET to stream from local file at bgMusic
 			fightMusic.play();								// also uncomment bgMusic above
 		} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
 			e.printStackTrace();
@@ -911,7 +916,7 @@ public class Combat extends JPanel{
 	}
 	
 	////////////////////////////////////////////////////////////////////////////
-	// Combat Menu handling functions
+	// Combat Menu handling functions (Buttons set in ButtonPane class)
 	//////////////////////////////////////////////////////////
 	private class CombatListener implements ActionListener {
 		    

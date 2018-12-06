@@ -1,6 +1,5 @@
 package org.rpg.map;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
@@ -9,12 +8,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.EnumMap;
 import java.util.Map;
@@ -23,7 +17,6 @@ import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
@@ -32,15 +25,8 @@ import javax.swing.Timer;
 
 import org.rpg.character.Party;
 import org.rpg.character.Player;
-import org.rpg.combat.Combat;
-import org.rpg.system.AudioPlayer;
 import org.rpg.system.Dir;
-import org.rpg.system.KeyBinding;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
+@SuppressWarnings("serial")
 public class Tile extends JPanel implements TileIndex{
 	
 		JFrame frame;
@@ -59,12 +45,12 @@ public class Tile extends JPanel implements TileIndex{
     	private String spriteLoc = "https://i.ibb.co/f1NkqtH/hero.png";
     	private Map<Dir, Boolean> dirMap = new EnumMap<>(Dir.class); // directions map
     	private Timer animationTimer = new Timer(TIMER_DELAY, new AnimationListener()); 
-        private String bgMusic = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/music/Xak.wav";
-        private AudioPlayer worldMusic;
-        private Clip clip; // music player
-        private BufferedInputStream audioStream;
-        private InputStream in;
-        private AudioInputStream audioIn;
+//        private String bgMusic = "/home/codreanu/Documents/School/Fall2018/ECE373/RPG_proj/music/Xak.wav";
+//        private AudioPlayer worldMusic;
+//        private Clip clip; // music player
+//        private BufferedInputStream audioStream;
+//        private InputStream in;
+//        private AudioInputStream audioIn;
     	 
 		public final int TILE_WIDTH = 32; // e.g. 64x64, 32x32, 16x16, etc
     	public final int TILE_HEIGHT = 32;
@@ -201,7 +187,6 @@ public class Tile extends JPanel implements TileIndex{
     	g.drawImage(world[3][2].getImageFromFile("tree"), 2*TILE_WIDTH, 3*TILE_HEIGHT, null);
     	g.drawImage(world[5][2].getImageFromFile("tree"), 2*TILE_WIDTH, 5*TILE_HEIGHT, null);
     	g.drawImage(world[7][2].getImageFromFile("tree"), 2*TILE_WIDTH, 7*TILE_HEIGHT, null);
-
         
 
     	//layer 3 - sprites
@@ -345,7 +330,6 @@ public class Tile extends JPanel implements TileIndex{
     
     public void updateFrame() {
     	//frame = new JFrame();
-    	KeyBinding mainPanel = new KeyBinding(); 
     	frame.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
     	frame.setTitle("The World");
     	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -406,6 +390,7 @@ public class Tile extends JPanel implements TileIndex{
     	p.addPartyMember(3, p3);
     	p.addPartyMember(4, p4);
     	Tile worldFrame = new Tile(p);
+    	
     	SwingUtilities.invokeLater(new Runnable() {
             public void run() {
             	worldFrame.updateFrame();

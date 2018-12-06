@@ -1,19 +1,14 @@
 package org.rpg.menu;
 
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -21,13 +16,10 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.UIManager;
 
 
 public class Title {
 	
-	private String name = "Next Gen RPG";
-	private Container c;
 	private JFrame menuScreen;
 	private JPanel titlePanel;
 	private ButtonPane buttonPane;
@@ -130,6 +122,7 @@ public class Title {
 	}
 	
 	// test main
+	@SuppressWarnings("unused")
 	public static void main(String[] args) {
 		Title title = new Title();
 

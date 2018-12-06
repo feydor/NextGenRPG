@@ -6,7 +6,6 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -14,17 +13,13 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Enumeration;
 
-import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
@@ -266,7 +261,7 @@ public class CustomizationMenu implements ActionListener{
  			
  			// create avatar for each player from url field
  			URL url;
- 			ImageIcon avi = null;
+ 			//ImageIcon avi = null;
 			try {
 				url = new URL(playerAviURLs[i]);
 				playerAvis[i] = new ImageIcon(url);
@@ -448,7 +443,8 @@ public class CustomizationMenu implements ActionListener{
 		
 	}
 	
-    public static void main(String[] args) {
+    @SuppressWarnings("unused")
+	public static void main(String[] args) {
     	Party p = new Party();
     	CustomizationMenu menu = new CustomizationMenu(p);
     }

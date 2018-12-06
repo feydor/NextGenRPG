@@ -2,15 +2,12 @@ package org.rpg.system;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Map;
 
 import javax.swing.ImageIcon;
 
 import org.rpg.character.Party;
 import org.rpg.character.Player;
 import org.rpg.combat.Combat;
-import org.rpg.combat.Skill;
-import org.rpg.item.EquipableItem;
 import org.rpg.item.Gear;
 import org.rpg.item.UsableItem;
 import org.rpg.item.Weapon;

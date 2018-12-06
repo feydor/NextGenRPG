@@ -2,8 +2,6 @@ package org.rpg.menu;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -12,17 +10,17 @@ import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
 import org.rpg.item.Item;
 
+@SuppressWarnings("serial")
 public class ButtonPane extends JPanel {
 
    private JButton[][] buttonsGrid;
    private JButton[] buttons;
-   private int numPlayers = 4; // default of 4
+   //private int numPlayers = 4; // default of 4
 
    public ButtonPane(int row, int col, Color fgColor) {
       super(new GridLayout(row, col));
@@ -108,7 +106,6 @@ private void createNumPlayersButtons(Color fgColor) {
 	   
 	   for (int i = 0; i < buttons.length; i++) {
             final int curRow = i;
-            final int curCol = 0;
             buttons[i].setBackground(fgColor);
             buttons[i].setForeground(Color.WHITE);
             buttons[i].setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
@@ -145,7 +142,6 @@ private void createNumPlayersButtons(Color fgColor) {
 	    
 	    for (int i = 0; i < buttons.length; i++) {
             final int curRow = i;
-            final int curCol = 0;
             buttons[i].setBackground(fgColor);
             buttons[i].setForeground(Color.WHITE);
             buttons[i].setFont(new Font("Monaco", Font.TRUETYPE_FONT, 20));
@@ -186,7 +182,6 @@ private void createNumPlayersButtons(Color fgColor) {
 	    
 	    for (int i = 0; i < buttons.length; i++) {
             final int curRow = i;
-            final int curCol = 0;
             buttons[i].setBackground(fgColor);
             buttons[i].setForeground(Color.WHITE);
             buttons[i].setBorder(new LineBorder(Color.WHITE));
@@ -222,7 +217,6 @@ private void createNumPlayersButtons(Color fgColor) {
 			String itemName = totalInventory.get(i).getName() + " : " + totalInventory.get(i).getDescription();
 			buttons[i].setText(buttons[i].getText() + itemName);
             final int curRow = i;
-            final int curCol = 0;
             buttons[i].setBackground(fgColor);
             buttons[i].setForeground(Color.WHITE);
             buttons[i].setBorder(new LineBorder(Color.WHITE));
@@ -258,8 +252,8 @@ private void createNumPlayersButtons(Color fgColor) {
 	    buttons[4] = new JButton("END TURN");
 
 	    for (int i = 0; i < buttons.length; i++) {
-            final int curRow = i;
-            final int curCol = 0;
+            //final int curRow = i;
+            //final int curCol = 0;
             buttons[i].setBackground(fgColor);
             buttons[i].setForeground(Color.WHITE);
             buttons[i].setBorder(new LineBorder(Color.WHITE));
